@@ -8,6 +8,12 @@ function MoistureSystem:loadMap()
     self.didLoadFromXML = false
     self.midHeight = 0
     self.currentMoisture = 0
+    
+    -- Initialize property tracker
+    g_currentMission.harvestPropertyTracker = HarvestPropertyTracker.new()
+    
+    -- Load from XML file (called directly during loadMap, not via hook)
+    self:loadFromXMLFile()
 end
 
 function MoistureSystem:getMoistureAtPosition(x, z)
@@ -71,5 +77,45 @@ function MoistureSystem:onStartMission()
     end
 end
 
+function MoistureSystem:loadFromXMLFile()
+    if not g_currentMission:getIsServer() then return end
+    
+    local savegameFolderPath = g_currentMission.missionInfo.savegameDirectory
+    if savegameFolderPath == nil then
+        savegameFolderPath = ('%ssavegame%d'):format(getUserProfileAppPath(), g_currentMission.missionInfo.savegameIndex)
+    end
+    savegameFolderPath = savegameFolderPath .. "/"
+    
+    if fileExists(savegameFolderPath .. MoistureSystem.SaveKey .. ".xml") then
+        local xmlFile = loadXMLFile(MoistureSystem.SaveKey, savegameFolderPath .. MoistureSystem.SaveKey .. ".xml")
+        
+        if g_currentMission.harvestPropertyTracker then
+            g_currentMission.harvestPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
+        end
+        
+        self.didLoadFromXML = true
+        delete(xmlFile)
+    end
+end
+
+function MoistureSystem:saveToXmlFile()
+    if not g_currentMission:getIsServer() then return end
+    
+    local savegameFolderPath = g_currentMission.missionInfo.savegameDirectory .. "/"
+    if savegameFolderPath == nil then
+        savegameFolderPath = ('%ssavegame%d'):format(getUserProfileAppPath(), g_currentMission.missionInfo.savegameIndex .. "/")
+    end
+    
+    local xmlFile = createXMLFile(MoistureSystem.SaveKey, savegameFolderPath .. MoistureSystem.SaveKey .. ".xml", MoistureSystem.SaveKey)
+    
+    if g_currentMission.harvestPropertyTracker then
+        g_currentMission.harvestPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
+    end
+    
+    saveXMLFile(xmlFile)
+    delete(xmlFile)
+end
+
+FSBaseMission.saveSavegame = Utils.appendedFunction(FSBaseMission.saveSavegame, MoistureSystem.saveToXmlFile)
 FSBaseMission.onStartMission = Utils.prependedFunction(FSBaseMission.onStartMission, MoistureSystem.onStartMission)
 addModEventListener(MoistureSystem)

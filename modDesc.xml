@@ -28,6 +28,7 @@ A mod that adds moisture to the game.
         </fr>
     </description>
     <extraSourceFiles>
+        <sourceFile filename="src/HarvestPropertyTracker.lua"/>
         <sourceFile filename="src/main.lua"/>
         <sourceFile filename="src/MoistureSettings.lua"/>
     </extraSourceFiles>
