@@ -104,6 +104,13 @@ end
 function MoistureSystem:getMoistureAtPosition(x, z)
     local height = getTerrainHeightAtWorldPos(g_terrainNode, x, 0, z)
 
+    -- Get current month and environment for clamping
+    local month = MoistureSystem.periodToMonth(g_currentMission.environment.currentPeriod)
+    local environment = self.settings.environment
+    local monthData = MoistureClamp.Environments[environment].Months[month]
+    local minMoisture = monthData.Min / 100
+    local maxMoisture = monthData.Max / 100
+
     -- At midHeight, return currentMoisturePercent
     -- Higher elevation = lower moisture, lower elevation = higher moisture
     local heightRange = self.maxHeight - self.minHeight
@@ -113,8 +120,8 @@ function MoistureSystem:getMoistureAtPosition(x, z)
         local heightFactor = heightDiff / (heightRange / 2)
 
         -- Adjust moisture: higher elevation reduces moisture, lower increases it
-        local moistureLevel = self.currentMoisturePercent - (heightFactor * 0.2)
-        return math.max(0, math.min(1, moistureLevel))
+        local moistureLevel = self.currentMoisturePercent - (heightFactor * 0.05)
+        return math.max(minMoisture, math.min(maxMoisture, moistureLevel))
     else
         return self.currentMoisturePercent
     end

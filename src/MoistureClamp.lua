@@ -9,52 +9,52 @@ MoistureClamp = {
         [MoistureClampEnvironments.DRY] = {
             Months = {
                 [1] = {
-                    Min = 0,
-                    Max = 20
+                    Min = 1,
+                    Max = 8
                 },
                 [2] = {
-                    Min = 0,
-                    Max = 25
+                    Min = 2,
+                    Max = 9
                 },
                 [3] = {
-                    Min = 5,
-                    Max = 30
+                    Min = 3,
+                    Max = 11
                 },
                 [4] = {
-                    Min = 10,
-                    Max = 35
+                    Min = 4,
+                    Max = 13
                 },
                 [5] = {
-                    Min = 15,
-                    Max = 40
+                    Min = 5,
+                    Max = 15
                 },
                 [6] = {
-                    Min = 20,
-                    Max = 45
+                    Min = 6,
+                    Max = 16
                 },
                 [7] = {
-                    Min = 20,
-                    Max = 45
+                    Min = 6,
+                    Max = 16
                 },
                 [8] = {
-                    Min = 15,
-                    Max = 40
+                    Min = 5,
+                    Max = 15
                 },
                 [9] = {
-                    Min = 10,
-                    Max = 35
+                    Min = 4,
+                    Max = 13
                 },
                 [10] = {
-                    Min = 5,
-                    Max = 30
+                    Min = 3,
+                    Max = 11
                 },
                 [11] = {
-                    Min = 0,
-                    Max = 25
+                    Min = 2,
+                    Max = 9
                 },
                 [12] = {
-                    Min = 0,
-                    Max = 20
+                    Min = 1,
+                    Max = 8
                 }
             }
         },
@@ -113,52 +113,52 @@ MoistureClamp = {
         [MoistureClampEnvironments.WET] = {
             Months = {
                 [1] = {
-                    Min = 5,
-                    Max = 8
-                },
-                [2] = {
-                    Min = 6,
-                    Max = 9
-                },
-                [3] = {
-                    Min = 7,
-                    Max = 10
-                },
-                [4] = {
-                    Min = 8,
-                    Max = 12
-                },
-                [5] = {
-                    Min = 9,
+                    Min = 4,
                     Max = 14
                 },
+                [2] = {
+                    Min = 5,
+                    Max = 16
+                },
+                [3] = {
+                    Min = 6,
+                    Max = 18
+                },
+                [4] = {
+                    Min = 7,
+                    Max = 20
+                },
+                [5] = {
+                    Min = 8,
+                    Max = 22
+                },
                 [6] = {
-                    Min = 10,
-                    Max = 15
+                    Min = 9,
+                    Max = 24
                 },
                 [7] = {
-                    Min = 10,
-                    Max = 15
+                    Min = 9,
+                    Max = 24
                 },
                 [8] = {
                     Min = 8,
-                    Max = 16
+                    Max = 22
                 },
                 [9] = {
-                    Min = 8,
-                    Max = 12
+                    Min = 7,
+                    Max = 20
                 },
                 [10] = {
-                    Min = 7,
-                    Max = 10
+                    Min = 6,
+                    Max = 18
                 },
                 [11] = {
-                    Min = 6,
-                    Max = 9
+                    Min = 5,
+                    Max = 16
                 },
                 [12] = {
-                    Min = 5,
-                    Max = 8
+                    Min = 4,
+                    Max = 14
                 }
             }
         }
