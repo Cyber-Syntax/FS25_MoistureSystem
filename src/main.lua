@@ -9,7 +9,7 @@ function MoistureSystem:loadMap()
     self.midHeight = 0
     self.currentMoisturePercent = 0
     self.timeSinceLastUpdate = 0
-    self.updateInterval = 5000 -- Update every 5 seconds (in milliseconds)
+    self.updateInterval = 500 -- Update every 0.5 seconds (in milliseconds)
 
     -- Initialize settings
     self.settings = {
@@ -53,7 +53,7 @@ end
 ---
 function MoistureSystem:updateMoistureLevel(delta)
     if not g_currentMission:getIsServer() then return end
-    local scaledDelta = delta * g_currentMission:getEffectiveTimeScale()
+    local scaledDelta = (delta * g_currentMission:getEffectiveTimeScale()) / 10000000
     local weather = g_currentMission.environment.weather
 
     -- Get current weather conditions
@@ -67,7 +67,7 @@ function MoistureSystem:updateMoistureLevel(delta)
 
     -- Gain moisture from rain/snow
     if rainfall > 0 or snowfall > 0 then
-        moistureDelta = (rainfall + snowfall * 0.75) * 0.009 * (scaledDelta / 100000) *
+        moistureDelta = (rainfall + snowfall * 0.75) * 0.009 * scaledDelta *
         self.settings.moistureGainMultiplier
         self:adjustMoisture(moistureDelta)
         return
@@ -92,7 +92,7 @@ function MoistureSystem:updateMoistureLevel(delta)
         rateFactor = temperature * 0.0000533
     end
 
-    moistureDelta = moistureDelta - (rateFactor * (scaledDelta / 100000) * sunFactor * self.settings.moistureLossMultiplier)
+    moistureDelta = moistureDelta - (rateFactor * scaledDelta * sunFactor * self.settings.moistureLossMultiplier)
 
     -- Apply moisture change with clamping
     self:adjustMoisture(moistureDelta)

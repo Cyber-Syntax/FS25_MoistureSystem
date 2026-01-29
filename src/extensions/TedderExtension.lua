@@ -6,8 +6,7 @@ MSTedderExtension.DRY_THRESHOLD = 0.07
 
 function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount)
     if g_fillTypeManager:getFillTypeNameByIndex(fillType) ~= "GRASS_WINDROW" then
-        return superFunc(self, dropArea,
-            fillType, amount)
+        return superFunc(self, dropArea, fillType, amount)
     end
 
     local startX, startY, startZ, endX, endY, endZ, radius = DensityMapHeightUtil.getLineByArea(dropArea.start,
@@ -16,25 +15,23 @@ function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount
         endX, endY, endZ, radius, nil, dropArea.lineOffset, false, nil, false)
     dropArea.lineOffset = lineOffset
 
-
-    local sx, _, sz = getWorldTranslation(dropArea.start)
-    local wx, _, wz = getWorldTranslation(dropArea.width)
-    local hx, _, hz = getWorldTranslation(dropArea.height)
-
-    local moistureSystem = g_currentMission.MoistureSystem
-    local tracker = g_currentMission.harvestPropertyTracker
-
-    local dropMoisture = dropArea.outputMoisture
-    if dropMoisture == nil then
-        local centerX = (sx + wx + hx) / 3
-        local centerZ = (sz + wz + hz) / 3
-        dropMoisture = moistureSystem:getMoistureAtPosition(centerX, centerZ)
+    if dropped > 0 then
+        local tracker = g_currentMission.harvestPropertyTracker
+        local sx, sy, sz = getWorldTranslation(dropArea.start)
+        local wx, wy, wz = getWorldTranslation(dropArea.width)
+        local hx, hy, hz = getWorldTranslation(dropArea.height)
+        
+        -- Add pile to tracker with moisture property
+        if dropArea.outputMoisture then
+            tracker:addPile(sx, sz, wx, wz, hx, hz, fillType, dropped, {moisture = dropArea.outputMoisture})
+        end
+        
+        -- Mark cells as tedded
+        local gridCells = tracker:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
+        for _, cell in pairs(gridCells) do
+            tracker:markGridCellTedded(cell.gridX, cell.gridZ)
+        end
     end
-
-    tracker:addPile(sx, sz, wx, wz, hx, hz, fillType, dropped, {
-        moisture = dropMoisture
-    })
-
     return dropped
 end
 
@@ -52,7 +49,6 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     local sx, sy, sz = getWorldTranslation(workArea.start)
     local wx, wy, wz = getWorldTranslation(workArea.width)
     local hx, hy, hz = getWorldTranslation(workArea.height)
-
     local centerX = (sx + wx + hx) / 3
     local centerZ = (sz + wz + hz) / 3
 
@@ -62,31 +58,46 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     if existingProps and existingProps.moisture then
         -- Grass already here with metadata - use it
         positionMoisture = existingProps.moisture
-        -- print(string.format("[TEDDER DROP] Found existing pile metadata: %.1f%% moisture", positionMoisture * 100))
+        print(string.format("[TEDDER] Pickup at (%.0f,%.0f): Found pile moisture %.1f%%", centerX, centerZ,
+            positionMoisture * 100))
     else
         -- Fresh grass - use field moisture
         positionMoisture = moistureSystem:getMoistureAtPosition(centerX, centerZ)
-        -- print(string.format("[TEDDER DROP] No existing pile, using field moisture: %.1f%%", positionMoisture * 100))
+        print(string.format("[TEDDER] Pickup at (%.0f,%.0f): No pile, using field moisture %.1f%%", centerX, centerZ,
+            positionMoisture * 100))
     end
 
     -- pick up
     local lsx, lsy, lsz, lex, ley, lez, lineRadius = DensityMapHeightUtil.getLineByAreaDimensions(sx, sy, sz, wx, wy, wz,
         hx, hy, hz, true)
 
+    local gridCells = tracker:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
     for targetFillType, inputFillTypes in pairs(spec.fillTypeConvertersReverse) do
         local pickedUpLiters = 0
+        local pickedUpHay = 0
         for _, inputFillType in ipairs(inputFillTypes) do
-            pickedUpLiters = pickedUpLiters +
-                DensityMapHeightUtil.tipToGroundAroundLine(self, -math.huge, inputFillType, lsx, lsy, lsz, lex, ley, lez,
-                    lineRadius, nil, nil, false, nil)
+            local pickup = DensityMapHeightUtil.tipToGroundAroundLine(self, -math.huge, inputFillType, lsx, lsy, lsz, lex,
+                ley, lez,
+                lineRadius, nil, nil, false, nil)
+            if pickup ~= 0 then
+                pickedUpLiters = pickedUpLiters + pickup
+                if inputFillType == hayFillTypeIndex then
+                    pickedUpHay = pickedUpHay + pickup
+                end
+            end
         end
 
         if pickedUpLiters == 0 and workArea.lastDropFillType ~= FillType.UNKNOWN then
             targetFillType = workArea.lastDropFillType
         end
 
+        local pickedUpNonHay = math.abs(pickedUpLiters) > math.abs(pickedUpHay)
         if pickedUpLiters < 0 and targetFillType == hayFillTypeIndex then
-            tracker:checkPileHasContent(centerX, centerZ, grassFillTypeIndex)
+            if pickedUpNonHay then
+                for _, cell in pairs(gridCells) do
+                    tracker:checkPileHasContent(cell.gridX, cell.gridZ, grassFillTypeIndex)
+                end
+            end
         end
 
         workArea.lastPickupLiters = -pickedUpLiters
@@ -96,18 +107,12 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
         local dropArea = workAreaSpec.workAreas[workArea.dropWindrowWorkAreaIndex]
         if dropArea ~= nil and workArea.litersToDrop > 0 then
             local dropped
-            dropArea.outputMoisture = nil
 
-            if g_fillTypeManager:getFillTypeNameByIndex(targetFillType) == "DRYGRASS_WINDROW" then
+            if g_fillTypeManager:getFillTypeNameByIndex(targetFillType) == "DRYGRASS_WINDROW" and pickedUpNonHay then
                 -- override default hay drop
-                local dropMoisture = math.max(0, positionMoisture - MSTedderExtension.MOISTURE_REDUCTION_PER_PASS)
-                if dropMoisture > MSTedderExtension.DRY_THRESHOLD then
-                    -- targetFillType = g_fillTypeManager:getFillTypeIndexByName("GRASS_WINDROW")
-                    dropArea.outputMoisture = dropMoisture
-                    dropped = self:processDropArea(dropArea, grassFillTypeIndex, workArea.litersToDrop)
-                else
-                    dropped = self:processDropArea(dropArea, hayFillTypeIndex, workArea.litersToDrop)
-                end
+                dropArea.outputMoisture = positionMoisture
+                dropped = self:processDropArea(dropArea, grassFillTypeIndex, workArea.litersToDrop)
+                dropArea.outputMoisture = nil
             else
                 dropped = self:processDropArea(dropArea, targetFillType, workArea.litersToDrop)
             end

@@ -1,7 +1,9 @@
 HarvestPropertyTracker = {}
 local HarvestPropertyTracker_mt = Class(HarvestPropertyTracker)
 
-HarvestPropertyTracker.GRID_SIZE = 10 -- 10m grid cells for consistent world grid
+HarvestPropertyTracker.GRID_SIZE = 5             -- 10m grid cells for consistent world grid
+HarvestPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
+HarvestPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
 
 function HarvestPropertyTracker.new()
     local self = setmetatable({}, HarvestPropertyTracker_mt)
@@ -14,6 +16,10 @@ function HarvestPropertyTracker.new()
 
     -- Separate storage for grass/grass windrow piles
     self.grassPiles = {}
+
+    -- Track which grid cells have been tedded with cooldown counter
+    -- Key: "gridX_gridZ", Value: counter (3=apply reduction, 2-1=cooldown, 0=remove)
+    self.teddedGridCells = {}
 
     return self
 end
@@ -180,6 +186,10 @@ function HarvestPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume
                 if originalValue and totalVolume > 0 then
                     -- Volume-weighted average
                     newProperties[propKey] = (originalValue * existingVolume + propValue * volumeForCell) / totalVolume
+                    print(string.format(
+                        "[TRACKER] Grid (%d,%d) %s: Original=%.3f (%.1fL) + Incoming=%.3f (%.1fL) = Result=%.3f (%.1fL total)",
+                        cell.gridX, cell.gridZ, propKey, originalValue, existingVolume, propValue, volumeForCell,
+                        newProperties[propKey], totalVolume))
                 else
                     newProperties[propKey] = propValue
                 end
@@ -258,6 +268,23 @@ function HarvestPropertyTracker:getPropertiesAtLocation(x, z, fillType)
 end
 
 ---
+-- Mark a grid cell as having been tedded
+-- @param gridX, gridZ: Grid-aligned coordinates
+---
+function HarvestPropertyTracker:markGridCellTedded(gridX, gridZ)
+    if not self.isServer then return end
+    local gridKey = string.format("%d_%d", gridX, gridZ)
+    
+    -- Only mark if not already in cooldown
+    if not self.teddedGridCells[gridKey] then
+        self.teddedGridCells[gridKey] = 3  -- Counter: 3 = apply reduction, 2-1 = cooldown
+        print(string.format("[TEDDER] Marked grid cell (%d,%d) as tedded (counter=3)", gridX, gridZ))
+    else
+        print(string.format("[TEDDER] Grid cell (%d,%d) already in cooldown (counter=%d)", gridX, gridZ, self.teddedGridCells[gridKey]))
+    end
+end
+
+---
 -- Update moisture levels for all grass piles
 -- @param moistureDelta: Amount to change moisture (can be positive or negative)
 ---
@@ -265,75 +292,32 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
     if not self.isServer then return end
     if moistureDelta == 0 then return end
 
-    -- Get current month and environment for clamping
-    local month = MoistureSystem.periodToMonth(g_currentMission.environment.currentPeriod)
-    local environment = g_currentMission.MoistureSystem.settings.environment
-    local monthData = MoistureClamp.Environments[environment].Months[month]
-    local minMoisture = monthData.Min / 100
-    local maxMoisture = monthData.Max / 100
-
-    -- Update all grass piles
+    -- Update all grass piles with fixed min/max clamping
     for key, pile in pairs(self.grassPiles) do
         if pile.properties.moisture then
-            local newMoisture = pile.properties.moisture + moistureDelta
-            pile.properties.moisture = math.max(minMoisture, math.min(maxMoisture, newMoisture))
+            local totalDelta = moistureDelta
+
+            -- Check if this grid cell was tedded - apply additional reduction only on first cycle (counter==3)
+            local gridKey = string.format("%d_%d", pile.gridX, pile.gridZ)
+            if self.teddedGridCells[gridKey] == 3 then
+                totalDelta = totalDelta - MSTedderExtension.MOISTURE_REDUCTION_PER_PASS
+            end
+
+            local newMoisture = pile.properties.moisture + totalDelta
+            pile.properties.moisture = math.max(HarvestPropertyTracker.MIN_GRASS_MOISTURE,
+                math.min(HarvestPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
             g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
                 key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
             ))
         end
     end
-end
 
----
--- Cleanup old piles that no longer exist
----
-function HarvestPropertyTracker:validateTrackedPiles()
-    if not self.isServer then return end
-
-    local toRemove = {}
-    local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
-
-    -- Validate crop piles
-    for key, pile in pairs(self.gridPiles) do
-        -- Check if filltype still exists at this grid location
-        local existingFillType = DensityMapHeightUtil.getFillTypeAtArea(
-            pile.gridX - checkRadius, pile.gridZ - checkRadius,
-            pile.gridX + checkRadius, pile.gridZ - checkRadius,
-            pile.gridX - checkRadius, pile.gridZ + checkRadius
-        )
-
-        if existingFillType ~= pile.fillType then
-            table.insert(toRemove, key)
+    -- Decrement tedded cell counters and remove expired ones
+    for gridKey, counter in pairs(self.teddedGridCells) do
+        self.teddedGridCells[gridKey] = counter - 1
+        if self.teddedGridCells[gridKey] <= 0 then
+            self.teddedGridCells[gridKey] = nil
         end
-    end
-
-    for _, key in ipairs(toRemove) do
-        self.gridPiles[key] = nil
-    end
-
-    local cropRemoved = #toRemove
-
-    -- Validate grass piles
-    toRemove = {}
-    for key, pile in pairs(self.grassPiles) do
-        -- Check if filltype still exists at this grid location
-        local existingFillType = DensityMapHeightUtil.getFillTypeAtArea(
-            pile.gridX - checkRadius, pile.gridZ - checkRadius,
-            pile.gridX + checkRadius, pile.gridZ - checkRadius,
-            pile.gridX - checkRadius, pile.gridZ + checkRadius
-        )
-
-        if existingFillType ~= pile.fillType then
-            table.insert(toRemove, key)
-        end
-    end
-
-    for _, key in ipairs(toRemove) do
-        self.grassPiles[key] = nil
-    end
-
-    if cropRemoved > 0 or #toRemove > 0 then
-        print(string.format("HarvestPropertyTracker: Cleaned up %d crop piles, %d grass piles", cropRemoved, #toRemove))
     end
 end
 
@@ -396,7 +380,7 @@ function HarvestPropertyTracker:saveToXMLFile(xmlFile, key)
     local i = 0
     -- Save crop piles
     for gridKey, pile in pairs(self.gridPiles) do
-        local pileKey = string.format("%s.cropPile(%d)", key, i)
+        local pileKey = string.format("%s.cropPiles.pile(%d)", key, i)
 
         setXMLInt(xmlFile, pileKey .. "#fillType", pile.fillType)
         setXMLFloat(xmlFile, pileKey .. "#gridX", pile.gridX)
@@ -415,7 +399,7 @@ function HarvestPropertyTracker:saveToXMLFile(xmlFile, key)
     -- Save grass piles
     i = 0
     for gridKey, pile in pairs(self.grassPiles) do
-        local pileKey = string.format("%s.grassPile(%d)", key, i)
+        local pileKey = string.format("%s.grassPiles.pile(%d)", key, i)
 
         setXMLInt(xmlFile, pileKey .. "#fillType", pile.fillType)
         setXMLFloat(xmlFile, pileKey .. "#gridX", pile.gridX)
@@ -440,7 +424,7 @@ function HarvestPropertyTracker:loadFromXMLFile(xmlFile, key)
 
     -- Load crop piles
     while true do
-        local pileKey = string.format("%s.cropPile(%d)", key, i)
+        local pileKey = string.format("%s.cropPiles.pile(%d)", key, i)
 
         if not hasXMLProperty(xmlFile, pileKey) then
             break
@@ -477,7 +461,7 @@ function HarvestPropertyTracker:loadFromXMLFile(xmlFile, key)
     i = 0
     loadedCount = 0
     while true do
-        local pileKey = string.format("%s.grassPile(%d)", key, i)
+        local pileKey = string.format("%s.grassPiles.pile(%d)", key, i)
 
         if not hasXMLProperty(xmlFile, pileKey) then
             break

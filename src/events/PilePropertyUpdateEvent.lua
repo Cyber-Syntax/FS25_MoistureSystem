@@ -58,7 +58,7 @@ function PilePropertyUpdateEvent:run(connection)
 
     local tracker = g_currentMission.harvestPropertyTracker
     if isGrass and self.properties.moisture and self.properties.moisture <= MSTedderExtension.DRY_THRESHOLD then
-        if connection:getIsServer() then
+        if g_currentMission:getIsServer() then
             -- Calculate area from grid position
             local halfSize = HarvestPropertyTracker.GRID_SIZE / 2
             local sx = self.gridX - halfSize
@@ -67,7 +67,7 @@ function PilePropertyUpdateEvent:run(connection)
             local wz = self.gridZ - halfSize
             local hx = self.gridX - halfSize
             local hz = self.gridZ + halfSize
-            
+
             local grassFillType = g_fillTypeManager:getFillTypeIndexByName("GRASS_WINDROW")
             local hayFillType = g_fillTypeManager:getFillTypeIndexByName("DRYGRASS_WINDROW")
             DensityMapHeightUtil.changeFillTypeAtArea(sx, sz, wx, wz, hx, hz, grassFillType, hayFillType)
