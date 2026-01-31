@@ -15,7 +15,8 @@ function MoistureSystem:loadMap()
     self.settings = {
         environment = MoistureClampEnvironments.NORMAL, -- Default to NORMAL
         moistureLossMultiplier = 3.0,
-        moistureGainMultiplier = 3.0
+        moistureGainMultiplier = 3.0,
+        teddingMoistureReduction = 0.02
     }
 
     -- Initialize property tracker
@@ -336,6 +337,11 @@ function MoistureSystem:loadFromXMLFile()
             self.settings.moistureGainMultiplier = gainMultiplier
         end
 
+        local teddingReduction = getXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#teddingMoistureReduction")
+        if teddingReduction then
+            self.settings.teddingMoistureReduction = teddingReduction
+        end
+
         if g_currentMission.harvestPropertyTracker then
             g_currentMission.harvestPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
         end
@@ -402,6 +408,8 @@ function MoistureSystem:saveToXmlFile()
     .moistureLossMultiplier)
     setXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#moistureGainMultiplier", ms.settings
     .moistureGainMultiplier)
+    setXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#teddingMoistureReduction", ms.settings
+    .teddingMoistureReduction)
 
     if g_currentMission.harvestPropertyTracker then
         g_currentMission.harvestPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)

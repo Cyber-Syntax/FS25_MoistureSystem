@@ -13,6 +13,7 @@ function MoistureSettingsEvent.new()
     self.environment = g_currentMission.MoistureSystem.settings.environment
     self.moistureLossMultiplier = g_currentMission.MoistureSystem.settings.moistureLossMultiplier
     self.moistureGainMultiplier = g_currentMission.MoistureSystem.settings.moistureGainMultiplier
+    self.teddingMoistureReduction = g_currentMission.MoistureSystem.settings.teddingMoistureReduction
     return self
 end
 
@@ -20,12 +21,14 @@ function MoistureSettingsEvent:writeStream(streamId, connection)
     streamWriteInt32(streamId, self.environment)
     streamWriteFloat32(streamId, self.moistureLossMultiplier)
     streamWriteFloat32(streamId, self.moistureGainMultiplier)
+    streamWriteFloat32(streamId, self.teddingMoistureReduction)
 end
 
 function MoistureSettingsEvent:readStream(streamId, connection)
     self.environment = streamReadInt32(streamId)
     self.moistureLossMultiplier = streamReadFloat32(streamId)
     self.moistureGainMultiplier = streamReadFloat32(streamId)
+    self.teddingMoistureReduction = streamReadFloat32(streamId)
     self:run(connection)
 end
 
@@ -37,6 +40,7 @@ function MoistureSettingsEvent:run(connection)
     g_currentMission.MoistureSystem.settings.environment = self.environment
     g_currentMission.MoistureSystem.settings.moistureLossMultiplier = self.moistureLossMultiplier
     g_currentMission.MoistureSystem.settings.moistureGainMultiplier = self.moistureGainMultiplier
+    g_currentMission.MoistureSystem.settings.teddingMoistureReduction = self.teddingMoistureReduction
 
     if connection:getIsServer() then
         -- Update UI controls if they exist

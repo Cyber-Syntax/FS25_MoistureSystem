@@ -430,7 +430,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
                         gridX, gridZ, existingVolume, baseMoisture * 100))
                 end
                 
-                local teddedMoisture = baseMoisture - MSTedderExtension.MOISTURE_REDUCTION_PER_PASS
+                local teddedMoisture = baseMoisture - g_currentMission.MoistureSystem.settings.teddingMoistureReduction
                 teddedMoisture = math.max(HarvestPropertyTracker.MIN_GRASS_MOISTURE,
                     math.min(HarvestPropertyTracker.MAX_GRASS_MOISTURE, teddedMoisture))
                 
@@ -468,7 +468,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
             if teddedCellsThisCycle[gridKey] and not processedThisCycle[gridKey] then
                 -- Apply tedding reduction
                 local oldMoisture = pile.properties.moisture
-                totalDelta = totalDelta - MSTedderExtension.MOISTURE_REDUCTION_PER_PASS
+                totalDelta = totalDelta - g_currentMission.MoistureSystem.settings.teddingMoistureReduction
                 print(string.format("[UPDATE] Cell (%d,%d) REDUCTION APPLIED: %.1f%% -> %.1f%%",
                     pile.gridX, pile.gridZ, oldMoisture * 100, 
                     (oldMoisture + totalDelta) * 100))

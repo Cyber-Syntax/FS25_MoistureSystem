@@ -1,7 +1,6 @@
 MSTedderExtension = {}
 
 -- Configuration
-MSTedderExtension.MOISTURE_REDUCTION_PER_PASS = 0.05
 MSTedderExtension.DRY_THRESHOLD = 0.07
 
 function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount)

@@ -4,7 +4,8 @@ MoistureSettings.CONTROLS = {}
 MoistureSettings.menuItems = {
     'environment',
     'moistureLossMultiplier',
-    'moistureGainMultiplier'
+    'moistureGainMultiplier',
+    'teddingMoistureReduction'
 }
 
 MoistureSettings.multiplayerPermissions = {
@@ -43,6 +44,14 @@ MoistureSettings.SETTINGS.moistureGainMultiplier = {
     ['permission'] = 'moistureSettings',
     ['values'] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
     ['strings'] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
+}
+
+MoistureSettings.SETTINGS.teddingMoistureReduction = {
+    ['default'] = 2,
+    ['serverOnly'] = true,
+    ['permission'] = 'moistureSettings',
+    ['values'] = { 0.01, 0.02, 0.03, 0.04, 0.05 },
+    ['strings'] = { "1%", "2%", "3%", "4%", "5%" }
 }
 
 function MoistureSettings.getStateIndex(id, value)
