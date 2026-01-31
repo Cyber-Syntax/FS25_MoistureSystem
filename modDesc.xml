@@ -29,6 +29,8 @@ Credit must be given to Arrow. While this mod is very different to Realistic Wea
         </fr>
     </description>
     <extraSourceFiles>
+        <sourceFile filename="src/data/CropValueMap.lua"/>
+        <sourceFile filename="src/data/MoistureClamp.lua"/>
         <sourceFile filename="src/extensions/PlayerHUDUpdateExtension.lua"/>
         <sourceFile filename="src/extensions/PlaceableInfoTriggerExtension.lua"/>
         <sourceFile filename="src/extensions/CutterExtension.lua"/>
@@ -41,8 +43,6 @@ Credit must be given to Arrow. While this mod is very different to Realistic Wea
         <sourceFile filename="src/extensions/TedderExtension.lua"/>
         <sourceFile filename="src/extensions/SellingStationExtension.lua"/>
         <sourceFile filename="src/HarvestPropertyTracker.lua"/>
-        <sourceFile filename="src/CropValueMap.lua"/>
-        <sourceFile filename="src/MoistureClamp.lua"/>
         <sourceFile filename="src/events/MoistureSettingsEvent.lua"/>
         <sourceFile filename="src/events/MoistureUpdateEvent.lua"/>
         <sourceFile filename="src/events/PilePropertyUpdateEvent.lua"/>
