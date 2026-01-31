@@ -42,13 +42,14 @@ Credit must be given to Arrow. While this mod is very different to Realistic Wea
         <sourceFile filename="src/extensions/MowerExtension.lua"/>
         <sourceFile filename="src/extensions/TedderExtension.lua"/>
         <sourceFile filename="src/extensions/SellingStationExtension.lua"/>
+        <sourceFile filename="src/gui/CropGradeTableRenderer.lua"/>
+        <sourceFile filename="src/gui/MoistureGuiGrades.lua"/>
+        <sourceFile filename="src/gui/MoistureGui.lua"/>
         <sourceFile filename="src/HarvestPropertyTracker.lua"/>
         <sourceFile filename="src/events/MoistureSettingsEvent.lua"/>
         <sourceFile filename="src/events/MoistureUpdateEvent.lua"/>
         <sourceFile filename="src/events/PilePropertyUpdateEvent.lua"/>
         <sourceFile filename="src/MoistureSettings.lua"/>
-        <sourceFile filename="src/gui/MoistureGuiGrades.lua"/>
-        <sourceFile filename="src/gui/MoistureGui.lua"/>
         <sourceFile filename="src/main.lua"/>
     </extraSourceFiles>
     <multiplayer supported="true"/>

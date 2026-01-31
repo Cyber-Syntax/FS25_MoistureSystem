@@ -39,6 +39,7 @@ function MoistureSystem:loadMap()
     FSBaseMission.registerActionEvents = Utils.appendedFunction(FSBaseMission.registerActionEvents, MoistureSystem.registerActionEventsPlayer)
 
     -- Load GUI
+    g_gui:loadProfiles(MoistureSystem.dir .. "src/gui/guiProfiles.xml")
     local gradesFrame = MoistureGuiGrades.new(g_i18n)
     g_gui:loadGui(MoistureSystem.dir .. "src/gui/MoistureGuiGrades.xml", "MoistureGuiGrades", gradesFrame, true)
     

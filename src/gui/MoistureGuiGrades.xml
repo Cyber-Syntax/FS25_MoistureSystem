@@ -8,8 +8,32 @@
             </Bitmap>
             <Text profile="fs25_menuHeaderTitle" text="$l10n_moistureSystem_gui_cropGradeValues" />
         </GuiElement>
+
+        <Text profile="msDescriptiveText" text="$l10n_moistureSystem_gui_description" position="20px -50px" width="1000px" />
         
-        <!-- Content will go here -->
-        <Text profile="fs25_menuHeaderTitle" text="test" />
+        <!-- Table Headers -->
+        <GuiElement profile="fs25_statisticsHeaderBox" position="20px -100px">
+            <Button profile="msTableHeader" position="0px 0px" size="300px 20px" text="$l10n_moistureSystem_gui_cropName" handleFocus="false" />
+            <Button profile="msTableHeader" position="300px 0px" size="200px 20px" text="$l10n_moistureSystem_gui_gradeA" handleFocus="false" />
+            <Button profile="msTableHeader" position="500px 0px" size="200px 20px" text="$l10n_moistureSystem_gui_gradeB" handleFocus="false" />
+            <Button profile="msTableHeader" position="700px 0px" size="200px 20px" text="$l10n_moistureSystem_gui_gradeC" handleFocus="false" />
+            <Button profile="msTableHeader" position="900px 0px" size="200px 20px" text="$l10n_moistureSystem_gui_gradeD" handleFocus="false" />
+        </GuiElement>
+        
+        <!-- Table Content -->
+        <SmoothList id="cropGradeTable" profile="msTable" position="0px -140px" size="1100px 600px">
+            <ListItem profile="msListItem">
+                <Text profile="msRowCellLeft" name="cropName" position="20px 0px" size="300px 20px" />
+                <Text profile="msRowCellLeft" name="gradeA" position="320px 0px" size="200px 20px" />
+                <Text profile="msRowCellLeft" name="gradeB" position="520px 0px" size="200px 20px" />
+                <Text profile="msRowCellLeft" name="gradeC" position="720px 0px" size="200px 20px" />
+                <Text profile="msRowCellLeft" name="gradeD" position="920px 0px" size="200px 20px" />
+            </ListItem>
+        </SmoothList>
+        
+        <!-- Scrollbar -->
+        <ThreePartBitmap profile="msGroupsSliderBox" position="1120px -140px" size="6px 600px">
+            <Slider profile="fs25_listSlider" dataElementId="cropGradeTable" />
+        </ThreePartBitmap>
     </GuiElement>
 </GUI>
