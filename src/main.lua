@@ -43,6 +43,9 @@ function MoistureSystem:loadMap()
     local gradesFrame = MoistureGuiGrades.new(g_i18n)
     g_gui:loadGui(MoistureSystem.dir .. "src/gui/MoistureGuiGrades.xml", "MoistureGuiGrades", gradesFrame, true)
     
+    local calendarFrame = MoistureGuiCalendar.new(g_i18n)
+    g_gui:loadGui(MoistureSystem.dir .. "src/gui/MoistureGuiCalendar.xml", "MoistureGuiCalendar", calendarFrame, true)
+    
     self.moistureGui = MoistureGui:new(g_messageCenter, g_i18n, g_inputBinding)
     g_gui:loadGui(MoistureSystem.dir .. "src/gui/MoistureGui.xml", "MoistureGui", self.moistureGui)
 end

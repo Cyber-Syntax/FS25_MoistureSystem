@@ -8,9 +8,9 @@
 		<!-- Environment Setting -->
 		<text name="setting_moisture_environment" text="Weather Environment"/>
 		<text name="setting_moisture_environment_tooltip" text="Sets the climate type for moisture calculations"/>
-		<text name="setting_moisture_environment_dry" text="Dry"/>
-		<text name="setting_moisture_environment_normal" text="Normal"/>
-		<text name="setting_moisture_environment_wet" text="Wet"/>
+		<text name="setting_moisture_environment_dry" text="DRY"/>
+		<text name="setting_moisture_environment_normal" text="NORMAL"/>
+		<text name="setting_moisture_environment_wet" text="WET"/>
 		
 		<!-- Multiplier Settings -->
 		<text name="setting_moisture_moistureLossMultiplier" text="Moisture Loss Multiplier"/>
@@ -34,5 +34,10 @@
 		<text name="moistureSystem_gui_gradeB" text="Grade B"/>
 		<text name="moistureSystem_gui_gradeC" text="Grade C"/>
 		<text name="moistureSystem_gui_gradeD" text="Grade D"/>
+		
+		<!-- Calendar GUI -->
+		<text name="moistureSystem_gui_moistureCalendar" text="Moisture Calendar"/>
+		<text name="moistureSystem_gui_currentEnvironment" text="Current Environment"/>
+		<text name="moistureSystem_gui_calendarDescription" text="The calendar below shows the expected moisture range for each month based on your current environment settings. Moisture levels are influenced by rainfall, temperature, and season."/>
 	</texts>
 </l10n>

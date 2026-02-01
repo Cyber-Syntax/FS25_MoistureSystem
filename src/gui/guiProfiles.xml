@@ -31,4 +31,40 @@
         <textMaxNumLines value="4"/>
         <textVerticalAlignment value="top"/>
     </Profile>
+    <Profile name="msDescriptiveTextSmall" extends="fs25_textGrey" with="anchorTopLeft">
+        <textSize value="14px"/>
+        <textMaxNumLines value="4"/>
+        <textVerticalAlignment value="top"/>
+    </Profile>
+    <Profile name="msCalendarMonthHeader" extends="fs25_textDefault" with="anchorBottomLeft">
+        <width value="102px"/>
+        <margin value="0px 35px 0px 0px"/>
+        <textSize value="18px"/>
+        <textBold value="true"/>
+        <textUpperCase value="true"/>
+        <textAlignment value="center"/>
+        <textVerticalAlignment value="bottom"/>
+    </Profile>
+    <Profile name="msCalendarValueCell" extends="fs25_textDefault" with="anchorMiddleCenter">
+        <textSize value="18px"/>
+        <size value="102px 105px"/>
+        <margin value="0px 0px 0 0"/>
+        <textBold value="true"/>
+        <textAlignment value="center"/>
+        <textVerticalAlignment value="middle"/>
+        <textColor value="$preset_fs25_colorMainHighlight"/>
+    </Profile>
+    <Profile name="msCalendarLegendEnvironment" extends="fs25_textDefault">
+        <size value="0px 30px"/>
+        <margin value="8px 0 0 0"/>
+        <textBold value="true"/>
+        <textAutoWidth value="true"/>
+        <textAlignment value="right"/>
+        <textColor value="$preset_fs25_colorMainHighlight"/>
+    </Profile>
+    <Profile name="msCalendarDescription" extends="fs25_textGrey" with="anchorTopLeft">
+        <textSize value="14px"/>
+        <textMaxNumLines value="3"/>
+        <textVerticalAlignment value="top"/>
+    </Profile>
 </GUIProfiles>
