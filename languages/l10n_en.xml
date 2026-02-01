@@ -38,6 +38,6 @@
 		<!-- Calendar GUI -->
 		<text name="moistureSystem_gui_moistureCalendar" text="Moisture Calendar"/>
 		<text name="moistureSystem_gui_currentEnvironment" text="Current Environment"/>
-		<text name="moistureSystem_gui_calendarDescription" text="The calendar below shows the expected moisture range for each month based on your current environment settings. Moisture levels are influenced by rainfall, temperature, and season."/>
+		<text name="moistureSystem_gui_calendarDescription" text="The calendar below shows the expected moisture range for each month based on your current environment setting. Moisture levels are influenced by rainfall, temperature, and season."/>
 	</texts>
 </l10n>

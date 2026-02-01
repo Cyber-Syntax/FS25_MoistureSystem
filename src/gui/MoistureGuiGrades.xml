@@ -9,7 +9,7 @@
             <Text profile="fs25_menuHeaderTitle" text="$l10n_moistureSystem_gui_cropGradeValues" />
         </GuiElement>
 
-        <Text profile="msDescriptiveText" text="$l10n_moistureSystem_gui_description" position="20px -50px" width="1000px" />
+        <Text profile="msDescriptiveText" text="$l10n_moistureSystem_gui_description" position="20px -50px" width="1400px" />
         
         <!-- Table Headers -->
         <GuiElement profile="fs25_statisticsHeaderBox" position="20px -100px">

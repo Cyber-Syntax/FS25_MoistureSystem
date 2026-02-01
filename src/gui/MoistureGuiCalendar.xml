@@ -10,20 +10,20 @@
         </GuiElement>
 
         <!-- Description above calendar -->
-        <Text profile="msDescriptiveText" position="40px -40px" width="1400px" 
+        <Text profile="msDescriptiveText" position="20px -50px" width="1400px" 
               text="$l10n_moistureSystem_gui_calendarDescription" />
 
         <!-- Calendar Container matching game's layout -->
         <GuiElement profile="fs25_calendarContainer">
             <!-- Season Icons (positioned like reference calendar) -->
-            <Bitmap profile="fs25_calendarHeaderSeasonSpring" position="185px -100px" />
-            <Bitmap profile="fs25_calendarHeaderSeasonSummer" position="495px -100px" />
-            <Bitmap profile="fs25_calendarHeaderSeasonFall" position="805px -100px" />
-            <Bitmap profile="fs25_calendarHeaderSeasonWinter" position="1115px -100px" />
+            <Bitmap profile="fs25_calendarHeaderSeasonSpring" position="220px -100px" />
+            <Bitmap profile="fs25_calendarHeaderSeasonSummer" position="530px -100px" />
+            <Bitmap profile="fs25_calendarHeaderSeasonFall" position="840px -100px" />
+            <Bitmap profile="fs25_calendarHeaderSeasonWinter" position="1150px -100px" />
             
 
             <!-- Month header container -->
-            <BoxLayout profile="fs25_calendarHeaderBox" id="monthHeaderBox" position="49px -120px" size="1242px 60px">
+            <BoxLayout profile="fs25_calendarHeaderBox" id="monthHeaderBox" position="84px -120px" size="1242px 60px">
                 <Bitmap profile="fs25_calendarSeparatorBig" />
                 <Text profile="msCalendarMonthHeader" id="monthHeader1" text="" />
                 <Bitmap profile="fs25_calendarSeparator" />
@@ -55,7 +55,7 @@
             <ThreePartBitmap profile="fs25_lineSeparatorTopHighlighted" position="0px -180px"/>
             
             <!-- Moisture Values Row -->
-            <GuiElement position="49px 280px" size="1242px 105px">
+            <GuiElement position="84px 290px" size="1242px 105px">
                 <BoxLayout size="1242px 105px" alignmentY="middle">
                     <Bitmap profile="fs25_calendarSeparator" width="2dp" />
                     <Text profile="msCalendarValueCell" id="month1" text="-"  />
@@ -85,7 +85,7 @@
                 </BoxLayout>
             </GuiElement>
 
-            <ThreePartBitmap profile="fs25_lineSeparatorBottom" height="1dp" position="0px 290px"/>
+            <ThreePartBitmap profile="fs25_lineSeparatorBottom" height="1dp" position="0px 308px"/>
             
             <!-- Legend box at top right -->
             <BoxLayout profile="fs25_calendarLegendBox">
