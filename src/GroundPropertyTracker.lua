@@ -1,21 +1,21 @@
-HarvestPropertyTracker = {}
-local HarvestPropertyTracker_mt = Class(HarvestPropertyTracker)
+GroundPropertyTracker = {}
+local GroundPropertyTracker_mt = Class(GroundPropertyTracker)
 
-HarvestPropertyTracker.GRID_SIZE = 5             -- 5m grid cells for consistent world grid
-HarvestPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
-HarvestPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
+GroundPropertyTracker.GRID_SIZE = 5             -- 5m grid cells for consistent world grid
+GroundPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
+GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
 
 -- Calculate cooldown cycles: 2000ms / 500ms updateInterval = 4 cycles
-HarvestPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
+GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
 
-HarvestPropertyTracker.GRASS_CONVERSION_MAP = {
+GroundPropertyTracker.GRASS_CONVERSION_MAP = {
     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
     ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
     ["CLOVER_WINDROW"] = "DRYCLOVER_WINDROW"
 }
 
-function HarvestPropertyTracker.new()
-    local self = setmetatable({}, HarvestPropertyTracker_mt)
+function GroundPropertyTracker.new()
+    local self = setmetatable({}, GroundPropertyTracker_mt)
 
     self.mission = g_currentMission
     self.isServer = self.mission:getIsServer()
@@ -49,11 +49,11 @@ end
 -- @param x, z: World coordinates
 -- @return gridX, gridZ: Grid-aligned center coordinates
 ---
-function HarvestPropertyTracker:getGridPosition(x, z)
-    local gridX = math.floor(x / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE +
-        HarvestPropertyTracker.GRID_SIZE / 2
-    local gridZ = math.floor(z / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE +
-        HarvestPropertyTracker.GRID_SIZE / 2
+function GroundPropertyTracker:getGridPosition(x, z)
+    local gridX = math.floor(x / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE +
+        GroundPropertyTracker.GRID_SIZE / 2
+    local gridZ = math.floor(z / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE +
+        GroundPropertyTracker.GRID_SIZE / 2
     return gridX, gridZ
 end
 
@@ -63,7 +63,7 @@ end
 -- @param fillType: The filltype index
 -- @return string key for storage
 ---
-function HarvestPropertyTracker:getGridKey(gridX, gridZ, fillType)
+function GroundPropertyTracker:getGridKey(gridX, gridZ, fillType)
     return string.format("%d_%d_%d", gridX, gridZ, fillType)
 end
 
@@ -72,60 +72,15 @@ end
 -- @param gridX, gridZ: Grid-aligned coordinates
 -- @return string key for storage
 ---
-function HarvestPropertyTracker:getSimpleGridKey(gridX, gridZ)
+function GroundPropertyTracker:getSimpleGridKey(gridX, gridZ)
     return string.format("%d_%d", gridX, gridZ)
 end
 
----
--- Check if fillType is grass or grass windrow
--- @param fillType: The filltype index
--- @return true if grass type
----
-function HarvestPropertyTracker:isGrassFillType(fillType)
-    -- I don't need think we need the non WINDROW types, but just in case
-    local grasses = {
-        ["GRASS_WINDROW"] = true,
-        ["GRASS"] = true,
-        ["ALFALFA_WINDROW"] = true,
-        ["ALFALFA"] = true,
-        ["CLOVER_WINDROW"] = true,
-        ["CLOVER"] = true
-    }
-    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-    return grasses[fillTypeName] or false
-end
 
----
--- Check if fillType is a hay/dry grass type (converted grass)
--- @param fillType: The filltype index
--- @return true if hay/dry type
----
-function HarvestPropertyTracker:isHayFillType(fillType)
-    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-    if not fillTypeName then return false end
-    
-    -- Check if this fillType is one of the hay conversion targets
-    for _, hayType in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
-        if fillTypeName == hayType then
-            return true
-        end
-    end
-    return false
-end
 
----
--- Check if fillType should be tracked (defined in CropValueMap)
--- @param fillType: The filltype index
--- @return true if should be tracked
----
-function HarvestPropertyTracker:shouldTrackFillType(fillType)
-    if self:isGrassFillType(fillType) then
-        return true
-    end
-    return CropValueMap.Data[fillType] ~= nil
-end
 
-function HarvestPropertyTracker:delete()
+
+function GroundPropertyTracker:delete()
     self.gridPiles = {}
     self.grassPiles = {}
 end
@@ -133,7 +88,7 @@ end
 ---
 -- Helper to count table entries
 ---
-function HarvestPropertyTracker:countTable(t)
+function GroundPropertyTracker:countTable(t)
     local count = 0
     for _ in pairs(t) do
         count = count + 1
@@ -147,8 +102,8 @@ end
 -- @param minX, maxX, minZ, maxZ: Bounding box extents
 -- @return overlap area in square meters
 ---
-function HarvestPropertyTracker:calculateCellOverlap(cellX, cellZ, minX, maxX, minZ, maxZ)
-    local halfSize = HarvestPropertyTracker.GRID_SIZE / 2
+function GroundPropertyTracker:calculateCellOverlap(cellX, cellZ, minX, maxX, minZ, maxZ)
+    local halfSize = GroundPropertyTracker.GRID_SIZE / 2
     local cellMinX = cellX - halfSize
     local cellMaxX = cellX + halfSize
     local cellMinZ = cellZ - halfSize
@@ -173,7 +128,7 @@ end
 -- @param sx, sz, wx, wz, hx, hz: Area corner coordinates
 -- @return table of {gridX, gridZ, overlapArea} entries, totalArea
 ---
-function HarvestPropertyTracker:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
+function GroundPropertyTracker:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
     local minX = math.min(sx, wx, hx)
     local maxX = math.max(sx, wx, hx)
     local minZ = math.min(sz, wz, hz)
@@ -183,15 +138,15 @@ function HarvestPropertyTracker:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
     local totalOverlapArea = 0
 
     -- Find all grid cells that intersect this bounding box
-    local startGridX = math.floor(minX / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE
-    local endGridX = math.floor(maxX / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE
-    local startGridZ = math.floor(minZ / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE
-    local endGridZ = math.floor(maxZ / HarvestPropertyTracker.GRID_SIZE) * HarvestPropertyTracker.GRID_SIZE
+    local startGridX = math.floor(minX / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE
+    local endGridX = math.floor(maxX / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE
+    local startGridZ = math.floor(minZ / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE
+    local endGridZ = math.floor(maxZ / GroundPropertyTracker.GRID_SIZE) * GroundPropertyTracker.GRID_SIZE
 
-    for gx = startGridX, endGridX, HarvestPropertyTracker.GRID_SIZE do
-        for gz = startGridZ, endGridZ, HarvestPropertyTracker.GRID_SIZE do
-            local gridX, gridZ = self:getGridPosition(gx + HarvestPropertyTracker.GRID_SIZE / 2,
-                gz + HarvestPropertyTracker.GRID_SIZE / 2)
+    for gx = startGridX, endGridX, GroundPropertyTracker.GRID_SIZE do
+        for gz = startGridZ, endGridZ, GroundPropertyTracker.GRID_SIZE do
+            local gridX, gridZ = self:getGridPosition(gx + GroundPropertyTracker.GRID_SIZE / 2,
+                gz + GroundPropertyTracker.GRID_SIZE / 2)
             local overlapArea = self:calculateCellOverlap(gridX, gridZ, minX, maxX, minZ, maxZ)
 
             if overlapArea > 0 then
@@ -212,11 +167,13 @@ end
 -- @param volume: Volume in liters (used only for weighted averaging, not stored)
 -- @param properties: Table of properties {moisture=0.18}
 ---
-function HarvestPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume, properties)
+function GroundPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume, properties)
     if not self.isServer then return end
 
+    local moistureSystem = g_currentMission.MoistureSystem
+
     -- Only track fillTypes defined in CropValueMap or grass types
-    if not self:shouldTrackFillType(fillType) then return end
+    if not moistureSystem:shouldTrackFillType(fillType) then return end
 
     -- Get all grid cells this drop affects with their overlap areas
     local affectedCells, totalOverlapArea = self:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
@@ -224,7 +181,7 @@ function HarvestPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume
     if #affectedCells == 0 or totalOverlapArea == 0 then return end
 
     -- Choose storage based on fillType
-    local storage = self:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
+    local storage = moistureSystem:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
 
     -- Distribute proportionally based on overlap area
     for _, cell in ipairs(affectedCells) do
@@ -237,7 +194,7 @@ function HarvestPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume
         if pile then
             -- Update existing pile with volume-weighted averaging
             -- Get actual volume from density map for accurate weighting
-            local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
+            local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
             local existingVolume = DensityMapHeightUtil.getFillLevelAtArea(
                 fillType,
                 cell.gridX - checkRadius, cell.gridZ - checkRadius,
@@ -288,8 +245,8 @@ end
 -- @param fillType: The filltype to check
 -- @return properties table or nil
 ---
-function HarvestPropertyTracker:getPropertiesAtLocation(x, z, fillType)
-    local storage = self:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
+function GroundPropertyTracker:getPropertiesAtLocation(x, z, fillType)
+    local storage = g_currentMission.MoistureSystem:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
     local gridX, gridZ = self:getGridPosition(x, z)
     local key = self:getGridKey(gridX, gridZ, fillType)
     local pile = storage[key]
@@ -306,7 +263,7 @@ end
 -- Only marks cells that haven't been processed recently (2 second cooldown)
 -- @param sx, sz, wx, wz, hx, hz: Area corner coordinates
 ---
-function HarvestPropertyTracker:markAreaTedded(sx, sz, wx, wz, hx, hz)
+function GroundPropertyTracker:markAreaTedded(sx, sz, wx, wz, hx, hz)
     if not self.isServer then return end
 
     -- Get all grid cells this area overlaps
@@ -334,21 +291,21 @@ end
 -- @param fillType: The filltype to check
 -- @return table of {gridX, gridZ, properties} entries, or empty table if none found
 ---
-function HarvestPropertyTracker:getAdjacentCellsWithMoisture(x, z, fillType)
-    local storage = self:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
+function GroundPropertyTracker:getAdjacentCellsWithMoisture(x, z, fillType)
+    local storage = g_currentMission.MoistureSystem:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
     local gridX, gridZ = self:getGridPosition(x, z)
     local adjacentCells = {}
 
     -- Check 8 adjacent cells (N, S, E, W, NE, NW, SE, SW)
     local offsets = {
-        { 0, HarvestPropertyTracker.GRID_SIZE },                                 -- North
-        { 0, -HarvestPropertyTracker.GRID_SIZE },                                -- South
-        { HarvestPropertyTracker.GRID_SIZE, 0 },                                 -- East
-        { -HarvestPropertyTracker.GRID_SIZE, 0 },                                -- West
-        { HarvestPropertyTracker.GRID_SIZE, HarvestPropertyTracker.GRID_SIZE },  -- NE
-        { -HarvestPropertyTracker.GRID_SIZE, HarvestPropertyTracker.GRID_SIZE }, -- NW
-        { HarvestPropertyTracker.GRID_SIZE, -HarvestPropertyTracker.GRID_SIZE }, -- SE
-        { -HarvestPropertyTracker.GRID_SIZE, -HarvestPropertyTracker.GRID_SIZE } -- SW
+        { 0, GroundPropertyTracker.GRID_SIZE },                                 -- North
+        { 0, -GroundPropertyTracker.GRID_SIZE },                                -- South
+        { GroundPropertyTracker.GRID_SIZE, 0 },                                 -- East
+        { -GroundPropertyTracker.GRID_SIZE, 0 },                                -- West
+        { GroundPropertyTracker.GRID_SIZE, GroundPropertyTracker.GRID_SIZE },  -- NE
+        { -GroundPropertyTracker.GRID_SIZE, GroundPropertyTracker.GRID_SIZE }, -- NW
+        { GroundPropertyTracker.GRID_SIZE, -GroundPropertyTracker.GRID_SIZE }, -- SE
+        { -GroundPropertyTracker.GRID_SIZE, -GroundPropertyTracker.GRID_SIZE } -- SW
     }
 
     for _, offset in ipairs(offsets) do
@@ -376,8 +333,8 @@ end
 -- @param grassFillType: The grass fillType index
 -- @param hayFillType: The hay fillType index
 ---
-function HarvestPropertyTracker:convertGrassToHayInCell(gridX, gridZ, grassFillType, hayFillType)
-    local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
+function GroundPropertyTracker:convertGrassToHayInCell(gridX, gridZ, grassFillType, hayFillType)
+    local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
     
     -- Check if there's grass in this cell
     local grassVolume = DensityMapHeightUtil.getFillLevelAtArea(
@@ -389,7 +346,7 @@ function HarvestPropertyTracker:convertGrassToHayInCell(gridX, gridZ, grassFillT
     
     if grassVolume > 0 then
         -- Convert grass to hay with buffer
-        local halfSize = HarvestPropertyTracker.GRID_SIZE / 2
+        local halfSize = GroundPropertyTracker.GRID_SIZE / 2
         local buffer = halfSize * 0.2
         local sx = gridX - halfSize - buffer
         local sz = gridZ - halfSize - buffer
@@ -415,7 +372,7 @@ end
 -- Update moisture levels for all grass piles
 -- @param moistureDelta: Amount to change moisture (can be positive or negative)
 ---
-function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
+function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
     if not self.isServer then return end
     if moistureDelta == 0 then return end
 
@@ -430,7 +387,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
 
     -- First: Force convert any grass in hay cells to hay
     -- Check all grass types defined in conversion map
-    for grassTypeName, hayTypeName in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
+    for grassTypeName, hayTypeName in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
         local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
         local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayTypeName)
         
@@ -447,7 +404,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
 
     -- Process tedded cells that don't have piles yet (newly dropped grass from tedder)
     local moistureSystem = g_currentMission.MoistureSystem
-    local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
+    local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
 
     for gridKey, _ in pairs(teddedCellsThisCycle) do
         local gridX, gridZ = gridKey:match("([^_]+)_([^_]+)")
@@ -455,7 +412,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
         gridZ = tonumber(gridZ)
 
         -- Check each grass type from conversion map
-        for grassTypeName, _ in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
+        for grassTypeName, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
             local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
             if grassFillType then
                 local key = self:getGridKey(gridX, gridZ, grassFillType)
@@ -485,8 +442,8 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
                 end
 
                 local teddedMoisture = baseMoisture - g_currentMission.MoistureSystem.settings.teddingMoistureReduction
-                teddedMoisture = math.max(HarvestPropertyTracker.MIN_GRASS_MOISTURE,
-                    math.min(HarvestPropertyTracker.MAX_GRASS_MOISTURE, teddedMoisture))
+                teddedMoisture = math.max(GroundPropertyTracker.MIN_GRASS_MOISTURE,
+                    math.min(GroundPropertyTracker.MAX_GRASS_MOISTURE, teddedMoisture))
 
                 -- print(string.format("[UPDATE] Cell (%d,%d) -> tedded %.1f%% (reduced by 5%%)",
                 --     gridX, gridZ, teddedMoisture * 100))
@@ -507,7 +464,7 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
                     -- Mark this cell as processed so we don't reduce it again in the second loop
                     processedThisCycle[gridKey] = true
                     -- Start cooldown to prevent immediate re-tedding
-                    self.processedTeddedCells[gridKey] = HarvestPropertyTracker.TEDDED_COOLDOWN_CYCLES
+                    self.processedTeddedCells[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
                 end
             end
         end
@@ -530,19 +487,19 @@ function HarvestPropertyTracker:updateGrassMoisture(moistureDelta)
                 --     (oldMoisture + totalDelta) * 100))
 
                 local newMoisture = pile.properties.moisture + totalDelta
-                pile.properties.moisture = math.max(HarvestPropertyTracker.MIN_GRASS_MOISTURE,
-                    math.min(HarvestPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
+                pile.properties.moisture = math.max(GroundPropertyTracker.MIN_GRASS_MOISTURE,
+                    math.min(GroundPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
                 g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
                     key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
                 ))
 
                 -- Start cooldown for existing pile that was tedded
-                self.processedTeddedCells[gridKey] = HarvestPropertyTracker.TEDDED_COOLDOWN_CYCLES
+                self.processedTeddedCells[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
             else
                 -- No tedding, just apply natural moisture change
                 local newMoisture = pile.properties.moisture + totalDelta
-                pile.properties.moisture = math.max(HarvestPropertyTracker.MIN_GRASS_MOISTURE,
-                    math.min(HarvestPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
+                pile.properties.moisture = math.max(GroundPropertyTracker.MIN_GRASS_MOISTURE,
+                    math.min(GroundPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
                 g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
                     key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
                 ))
@@ -572,8 +529,9 @@ end
 -- @param gridX, gridZ: Grid coordinates
 -- @param fillType: The filltype to check
 ---
-function HarvestPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
-    local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
+function GroundPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
+    local moistureSystem = g_currentMission.MoistureSystem
+    local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
     local volume = DensityMapHeightUtil.getFillLevelAtArea(
         fillType,
         gridX - checkRadius, gridZ - checkRadius,
@@ -583,7 +541,7 @@ function HarvestPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
 
     if volume <= 0 then
         local key = self:getGridKey(gridX, gridZ, fillType)
-        local storage = self:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
+        local storage = moistureSystem:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
         if storage[key] then
             storage[key] = nil
             -- print(string.format("[CLEANUP] Removed empty pile at (%d,%d)", gridX, gridZ))
@@ -597,8 +555,9 @@ end
 -- @param fillType: The filltype to check
 -- @return properties table or nil
 ---
-function HarvestPropertyTracker:getPilePropertiesAtPosition(x, z, fillType)
-    local storage = self:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
+function GroundPropertyTracker:getPilePropertiesAtPosition(x, z, fillType)
+    local moistureSystem = g_currentMission.MoistureSystem
+    local storage = moistureSystem:isGrassFillType(fillType) and self.grassPiles or self.gridPiles
     local gridX, gridZ = self:getGridPosition(x, z)
     local key = self:getGridKey(gridX, gridZ, fillType)
     local pile = storage[key]
@@ -610,7 +569,7 @@ function HarvestPropertyTracker:getPilePropertiesAtPosition(x, z, fillType)
     return nil
 end
 
-function HarvestPropertyTracker:saveToXMLFile(xmlFile, key)
+function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
     if not self.isServer then return end
 
     local i = 0
@@ -649,10 +608,10 @@ function HarvestPropertyTracker:saveToXMLFile(xmlFile, key)
         i = i + 1
     end
 
-    -- print(string.format("HarvestPropertyTracker: Saved %d crop piles, %d grass piles", cropCount, i))
+    -- print(string.format("GroundPropertyTracker: Saved %d crop piles, %d grass piles", cropCount, i))
 end
 
-function HarvestPropertyTracker:loadFromXMLFile(xmlFile, key)
+function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
     if not self.isServer then return end
 
     local i = 0
@@ -728,5 +687,5 @@ function HarvestPropertyTracker:loadFromXMLFile(xmlFile, key)
         i = i + 1
     end
 
-    -- print(string.format("HarvestPropertyTracker: Loaded %d crop piles, %d grass piles", cropCount, loadedCount))
+    -- print(string.format("GroundPropertyTracker: Loaded %d crop piles, %d grass piles", cropCount, loadedCount))
 end

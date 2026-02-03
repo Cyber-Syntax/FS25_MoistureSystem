@@ -17,6 +17,10 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Uses 500ms update interval (`updateInterval = 500`)
 - Dynamic moisture changes based on rainfall, snowfall, temperature, and time of day
 - Reduced loss at night (6am-8pm = day, night = 33% loss rate)
+- **FillType Checking Methods**:
+  - `isGrassFillType(fillType)` - Check if fillType is grass/alfalfa/clover (windrow or regular)
+  - `isHayFillType(fillType)` - Check if fillType is converted hay/dry grass
+  - `shouldTrackFillType(fillType)` - Check if fillType should be tracked (grass or in CropValueMap)
 
 ### Moisture Settings & Clamp System
 - **Location**: `src/MoistureSettings.lua` and `src/MoistureClamp.lua`
@@ -28,8 +32,8 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Persists in save game XML
 
 ### Harvest Property Tracker
-- **Location**: `src/HarvestPropertyTracker.lua`
-- **Global Access**: `g_currentMission.harvestPropertyTracker`
+- **Location**: `src/GroundPropertyTracker.lua`
+- **Global Access**: `g_currentMission.groundPropertyTracker`
 - Tracks custom properties (moisture) on dropped filltype piles
 - Uses grid-based storage (5m cells) with `"gridX_gridZ_fillType"` keys
 - Separate storage for grass piles (`grassPiles`) vs other crops (`gridPiles`)
@@ -145,7 +149,7 @@ function MoistureSystem:loadMap()
     g_currentMission.MoistureSystem = self
     
     -- Initialize subsystems
-    g_currentMission.harvestPropertyTracker = HarvestPropertyTracker.new()
+    g_currentMission.groundPropertyTracker = GroundPropertyTracker.new()
     
     -- Load from XML directly (NOT via hook)
     self:loadFromXMLFile()
@@ -167,7 +171,7 @@ function MoistureSystem:loadFromXMLFile()
         local xmlFile = loadXMLFile(MoistureSystem.SaveKey, savegameFolderPath .. MoistureSystem.SaveKey .. ".xml")
         
         -- Load subsystems
-        g_currentMission.harvestPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
+        g_currentMission.groundPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
         
         self.didLoadFromXML = true
         delete(xmlFile)
@@ -188,7 +192,7 @@ function MoistureSystem:saveToXmlFile()
     local xmlFile = createXMLFile(MoistureSystem.SaveKey, savegameFolderPath .. MoistureSystem.SaveKey .. ".xml", MoistureSystem.SaveKey)
     
     -- Save subsystems
-    g_currentMission.harvestPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
+    g_currentMission.groundPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
     
     saveXMLFile(xmlFile)
     delete(xmlFile)
@@ -218,7 +222,7 @@ addModEventListener(MoistureSystem)  -- Enable loadMap and update callbacks
 
 **Subsystem save method (takes xmlFile and key):**
 ```lua
-function HarvestPropertyTracker:saveToXMLFile(xmlFile, key)
+function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
     if not self.isServer then return end
     
     local i = 0
@@ -240,7 +244,7 @@ end
 
 **Subsystem load method (takes xmlFile and key):**
 ```lua
-function HarvestPropertyTracker:loadFromXMLFile(xmlFile, key)
+function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
     if not self.isServer then return end
     
     local i = 0
@@ -386,7 +390,7 @@ function MSDischargeableExtension:dischargeToGround(superFunc, dischargeNode, em
     end
     
     -- Track pile with properties using absolute value (dischargedLiters is negative)
-    g_currentMission.harvestPropertyTracker:addPile(
+    g_currentMission.groundPropertyTracker:addPile(
         sx, sz, ex, ez, ex, ez,
         math.abs(dischargedLiters),
         fillType,
@@ -429,7 +433,7 @@ function MSFillVolumeExtension:onFillUnitFillLevelChanged(superFunc, fillUnitInd
     end
     
     -- Get moisture from tracked pile at pickup location
-    local properties = g_currentMission.harvestPropertyTracker:getPilePropertiesAtPosition(
+    local properties = g_currentMission.groundPropertyTracker:getPilePropertiesAtPosition(
         fillPositionData.x, fillPositionData.z, fillType
     )
     
@@ -495,7 +499,7 @@ end
 - Key methods:
   - `getObjectMoisture(uniqueId, fillType)` - Get moisture for specific fillType
   - `setObjectMoisture(uniqueId, fillType, moisture)` - Set moisture (nil to clear)
-  - `transferMoisture(sourceId, targetId, sourceLiters, targetLiters, fillType)` - Volume-weighted transfer
+  - `transferObjectMoisture(sourceId, targetId, sourceLiters, targetLiters, fillType)` - Volume-weighted transfer
   - `getDefaultMoisture()` - Returns current field moisture for silo loads
 - Automatically cleared when vehicle empties (via CombineExtension)
 - Persists in save game alongside pile data
@@ -611,7 +615,7 @@ ClassName.functionName = Utils.overwrittenFunction(
     MSExtensionName.functionName
 )
 ```
-- **Classes**: PascalCase (e.g., `HarvestPropertyTracker`)
+- **Classes**: PascalCase (e.g., `GroundPropertyTracker`)
 - **Functions**: camelCase (e.g., `getMoistureAtPosition`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_TRACKED_PILES`)
 - **Private methods**: Use `:` prefix (e.g., `self:addToSpatialGrid()`)

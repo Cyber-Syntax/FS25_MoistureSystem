@@ -21,7 +21,7 @@ function MSBalerExtension:processBalerArea(superFunc, workArea, dt)
         return result
     end
     
-    local tracker = g_currentMission.harvestPropertyTracker
+    local tracker = g_currentMission.groundPropertyTracker
     if tracker == nil then
         return result
     end
@@ -52,7 +52,7 @@ function MSBalerExtension:processBalerArea(superFunc, workArea, dt)
     
     if pile then
         -- Check if fillType actually still exists at this location
-        local checkRadius = HarvestPropertyTracker.GRID_SIZE / 2
+        local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
         
         -- Use density map to check if fillType is still present
         local fillLevelAtLocation = DensityMapHeightUtil.getFillLevelAtArea(

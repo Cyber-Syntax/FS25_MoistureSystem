@@ -44,7 +44,7 @@ A mod that adds moisture to the game.
         <sourceFile filename="src/gui/MoistureGuiGrades.lua"/>
         <sourceFile filename="src/gui/MoistureGuiCalendar.lua"/>
         <sourceFile filename="src/gui/MoistureGui.lua"/>
-        <sourceFile filename="src/HarvestPropertyTracker.lua"/>
+        <sourceFile filename="src/GroundPropertyTracker.lua"/>
         <sourceFile filename="src/events/MoistureSettingsEvent.lua"/>
         <sourceFile filename="src/events/MoistureUpdateEvent.lua"/>
         <sourceFile filename="src/events/PilePropertyUpdateEvent.lua"/>

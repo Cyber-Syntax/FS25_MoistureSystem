@@ -4,8 +4,8 @@ MSTedderExtension = {}
 MSTedderExtension.DRY_THRESHOLD = 0.07
 
 function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount)
-    local tracker = g_currentMission.harvestPropertyTracker
-    if not tracker:isGrassFillType(fillType) then
+    local tracker = g_currentMission.groundPropertyTracker
+    if not g_currentMission.MoistureSystem:isGrassFillType(fillType) then
         return superFunc(self, dropArea, fillType, amount)
     end
 
@@ -47,7 +47,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     local workAreaSpec = self.spec_workArea
 
 
-    local tracker = g_currentMission.harvestPropertyTracker
+    local tracker = g_currentMission.groundPropertyTracker
     -- local grassFillTypeIndex = g_fillTypeManager:getFillTypeIndexByName("GRASS_WINDROW")
     -- local hayFillTypeIndex = g_fillTypeManager:getFillTypeIndexByName("DRYGRASS_WINDROW")
 
@@ -60,7 +60,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     local positionMoisture
     
     -- Check for existing grass pile moisture at this location
-    for grassType, _ in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
+    for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
         local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
         if grassFillType then
             local existingProps = tracker:getPropertiesAtLocation(centerX, centerZ, grassFillType)
@@ -98,7 +98,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
         if pickedUpLiters ~= 0 and tracker:isHayFillType(targetFillType) then
             for _, cell in pairs(gridCells) do
                 -- Check all grass types for cleanup
-                for grassType, _ in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
+                for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
                     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
                     if grassFillType then
                         tracker:checkPileHasContent(cell.gridX, cell.gridZ, grassFillType)
@@ -121,7 +121,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
                 local grassTypeName = nil
                 
                 -- Find the grass type that converts to this hay type
-                for grassType, hayType in pairs(HarvestPropertyTracker.GRASS_CONVERSION_MAP) do
+                for grassType, hayType in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
                     if hayType == targetFillTypeName then
                         grassTypeName = grassType
                         break

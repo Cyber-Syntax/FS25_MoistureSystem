@@ -41,7 +41,7 @@ end
 -- Determine moisture multiplier for a crop being sold
 -- Attempts to find moisture level from multiple sources in priority order:
 -- 1. Vehicle-based moisture (from fillInfo.sourceUniqueId set by DischargeableExtension)
--- 2. Ground pile moisture (from HarvestPropertyTracker)
+-- 2. Ground pile moisture (from GroundPropertyTracker)
 -- @param fillTypeIndex: Type of crop being sold
 -- @param fillInfo: Information about the fill source (includes sourceUniqueId from dischargeNode.info)
 -- @param extraAttributes: Extra attributes

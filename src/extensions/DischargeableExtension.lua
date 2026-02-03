@@ -23,7 +23,7 @@ function MSDischargeableExtension:dischargeToGround(superFunc, dischargeNode, em
     end
 
     -- Get the moisture system
-    local tracker = g_currentMission.harvestPropertyTracker
+    local tracker = g_currentMission.groundPropertyTracker
     if tracker == nil then
         return dischargedLiters, minDropReached, hasMinDropFillLevel
     end
@@ -170,6 +170,10 @@ function MSDischargeableExtension:dischargeToObject(superFunc, dischargeNode, em
         return dischargedLiters
     end
 
+    if not moistureSystem:shouldTrackFillType(fillType) then
+        return dischargedLiters
+    end
+
     -- Get source moisture (from this vehicle)
     local sourceMoisture = moistureSystem:getObjectMoisture(uniqueId, fillType)
 
@@ -186,7 +190,7 @@ function MSDischargeableExtension:dischargeToObject(superFunc, dischargeNode, em
 
     -- Transfer moisture to target using volume-weighted averaging
     -- Use absolute value since dischargedLiters is negative
-    moistureSystem:transferMoisture(
+    moistureSystem:transferObjectMoisture(
         self.uniqueId,
         uniqueId,
         math.abs(dischargedLiters),

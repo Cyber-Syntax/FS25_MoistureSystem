@@ -131,7 +131,7 @@ function MSPlayerHUDExtension:showFillTypeInfo()
     local box = self.fillTypeBox
     if box == nil then return end
 
-    local harvestTracker = g_currentMission.harvestPropertyTracker
+    local harvestTracker = g_currentMission.groundPropertyTracker
     if harvestTracker == nil then
         box:clear()
         return

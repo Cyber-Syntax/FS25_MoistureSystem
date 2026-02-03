@@ -15,31 +15,40 @@ MSCombineExtension = {}
 -- @param fillPositionData: Position data
 -- @param appliedDelta: Actually applied delta
 ---
-function MSCombineExtension:onFillUnitFillLevelChanged(superFunc, fillUnitIndex, fillLevelDelta, fillTypeIndex, toolType, fillPositionData, appliedDelta)
+function MSCombineExtension:onFillUnitFillLevelChanged(superFunc, fillUnitIndex, fillLevelDelta, fillTypeIndex, toolType,
+                                                       fillPositionData, appliedDelta)
     -- Call original function
     if superFunc ~= nil then
         superFunc(self, fillUnitIndex, fillLevelDelta, fillTypeIndex, toolType, fillPositionData, appliedDelta)
     end
-    
+
+    if not g_currentMission.MoistureSystem.missionStarted then
+        return
+    end
+
     -- Only handle on server
     if not self.isServer then
         return
     end
-    
+
+    local moistureSystem = g_currentMission.MoistureSystem
+    if not moistureSystem:shouldTrackFillType(fillTypeIndex) then
+        return
+    end
+
     local spec = self.spec_combine
     if spec == nil then
         return
     end
-    
+
     -- Check if this is the main fill unit or buffer
     if fillUnitIndex ~= spec.fillUnitIndex and fillUnitIndex ~= spec.bufferFillUnitIndex then
         return
     end
-    
+
     -- If fill level is now zero or near zero, clear moisture tracking for this fillType
     local fillLevel = self:getFillUnitFillLevel(fillUnitIndex)
     if fillLevel <= 0.001 then
-        local moistureSystem = g_currentMission.MoistureSystem
         if moistureSystem and self.uniqueId and fillTypeIndex then
             -- Clear moisture for this specific fillType
             moistureSystem:setObjectMoisture(self.uniqueId, fillTypeIndex, nil)

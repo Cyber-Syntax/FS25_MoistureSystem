@@ -20,7 +20,7 @@ function MoistureSystem:loadMap()
     }
 
     -- Initialize property tracker
-    g_currentMission.harvestPropertyTracker = HarvestPropertyTracker.new()
+    g_currentMission.groundPropertyTracker = GroundPropertyTracker.new()
 
     -- Initialize vehicle/object moisture tracking
     self.objectMoisture = {}
@@ -116,8 +116,8 @@ function MoistureSystem:updateMoistureLevel(delta)
     self:adjustMoisture(moistureDelta)
 
     -- Update grass pile moisture
-    if g_currentMission.harvestPropertyTracker then
-        g_currentMission.harvestPropertyTracker:updateGrassMoisture(moistureDelta)
+    if g_currentMission.groundPropertyTracker then
+        g_currentMission.groundPropertyTracker:updateGrassMoisture(moistureDelta)
     end
 end
 
@@ -253,6 +253,10 @@ function MoistureSystem:getObjectMoisture(uniqueId, fillType)
         return nil
     end
 
+    if not self:shouldTrackFillType(fillType) then
+        return nil
+    end
+
     local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
     if fillTypeName == nil then
         return nil
@@ -277,6 +281,10 @@ function MoistureSystem:setObjectMoisture(uniqueId, fillType, moisture)
         return
     end
 
+    if not self:shouldTrackFillType(fillType) then
+        return
+    end
+
     local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
     if fillTypeName == nil then
         return
@@ -297,8 +305,12 @@ end
 -- @param targetCurrentLiters: Current amount in target before transfer
 -- @param fillType: FillType index being transferred
 ---
-function MoistureSystem:transferMoisture(sourceId, targetId, sourceLiters, targetCurrentLiters, fillType)
+function MoistureSystem:transferObjectMoisture(sourceId, targetId, sourceLiters, targetCurrentLiters, fillType)
     if sourceId == nil or targetId == nil or sourceLiters <= 0 or fillType == nil then
+        return
+    end
+
+    if not self:shouldTrackFillType(fillType) then
         return
     end
 
@@ -321,6 +333,60 @@ function MoistureSystem:transferMoisture(sourceId, targetId, sourceLiters, targe
         local weightedMoisture = (targetCurrentLiters * targetMoisture) + (sourceLiters * sourceMoisture)
         self:setObjectMoisture(targetId, fillType, weightedMoisture / totalLiters)
     end
+end
+
+---
+-- Check if fillType is grass or grass windrow
+-- @param fillType: The filltype index
+-- @return true if grass type
+---
+function MoistureSystem:isGrassFillType(fillType)
+    local grasses = {
+        ["GRASS_WINDROW"] = true,
+        ["GRASS"] = true,
+        ["ALFALFA_WINDROW"] = true,
+        ["ALFALFA"] = true,
+        ["CLOVER_WINDROW"] = true,
+        ["CLOVER"] = true
+    }
+    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
+    return grasses[fillTypeName] or false
+end
+
+---
+-- Check if fillType is a hay/dry grass type (converted grass)
+-- @param fillType: The filltype index
+-- @return true if hay/dry type
+---
+function MoistureSystem:isHayFillType(fillType)
+    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
+    if not fillTypeName then return false end
+    
+    local GRASS_CONVERSION_MAP = {
+        ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
+        ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
+        ["CLOVER_WINDROW"] = "DRYCLOVER_WINDROW"
+    }
+    
+    -- Check if this fillType is one of the hay conversion targets
+    for _, hayType in pairs(GRASS_CONVERSION_MAP) do
+        if fillTypeName == hayType then
+            return true
+        end
+    end
+    return false
+end
+
+---
+-- Check if fillType should be tracked (defined in CropValueMap)
+-- @param fillType: The filltype index
+-- @return true if should be tracked
+---
+function MoistureSystem:shouldTrackFillType(fillType)
+    if self:isGrassFillType(fillType) then
+        return true
+    end
+    return CropValueMap.Data[fillType] ~= nil
 end
 
 ---
@@ -390,8 +456,8 @@ function MoistureSystem:loadFromXMLFile()
             self.settings.teddingMoistureReduction = teddingReduction
         end
 
-        if g_currentMission.harvestPropertyTracker then
-            g_currentMission.harvestPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
+        if g_currentMission.groundPropertyTracker then
+            g_currentMission.groundPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
         end
 
         -- Load object moisture data
@@ -462,8 +528,8 @@ function MoistureSystem:saveToXmlFile()
     setXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#teddingMoistureReduction", ms.settings
         .teddingMoistureReduction)
 
-    if g_currentMission.harvestPropertyTracker then
-        g_currentMission.harvestPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
+    if g_currentMission.groundPropertyTracker then
+        g_currentMission.groundPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
     end
 
     -- Save object moisture data

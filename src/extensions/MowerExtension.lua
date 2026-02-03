@@ -29,7 +29,7 @@ function MSMowerExtension:processDropArea(superFunc, dropArea, dt)
     
     -- Get moisture system and tracker
     local moistureSystem = g_currentMission.MoistureSystem
-    local tracker = g_currentMission.harvestPropertyTracker
+    local tracker = g_currentMission.groundPropertyTracker
     if moistureSystem == nil or tracker == nil then
         return
     end

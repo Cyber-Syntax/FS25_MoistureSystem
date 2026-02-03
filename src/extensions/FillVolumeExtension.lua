@@ -26,6 +26,11 @@ function MSFillVolumeExtension:onFillUnitFillLevelChanged(superFunc, fillUnitInd
         return
     end
 
+    local moistureSystem = g_currentMission.MoistureSystem
+    if not moistureSystem:shouldTrackFillType(fillType) then
+        return
+    end
+
     -- Only track on server and if we're adding material
     if not self.isServer or fillLevelDelta <= 0 then
         return
@@ -46,8 +51,7 @@ function MSFillVolumeExtension:onFillUnitFillLevelChanged(superFunc, fillUnitInd
         return
     end
 
-    local moistureSystem = g_currentMission.MoistureSystem
-    local tracker = g_currentMission.harvestPropertyTracker
+    local tracker = g_currentMission.groundPropertyTracker
     if moistureSystem == nil or tracker == nil then
         return
     end

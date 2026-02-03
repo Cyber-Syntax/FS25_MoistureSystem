@@ -54,12 +54,12 @@ function PilePropertyUpdateEvent:run(connection)
         ))
     end
 
-    local tracker = g_currentMission.harvestPropertyTracker
-    local isGrass = tracker:isGrassFillType(self.fillTypeIndex)
+    local tracker = g_currentMission.groundPropertyTracker
+    local isGrass = g_currentMission.MoistureSystem:isGrassFillType(self.fillTypeIndex)
     if isGrass and self.properties.moisture and self.properties.moisture <= MSTedderExtension.DRY_THRESHOLD then
         if g_currentMission:getIsServer() then
             -- Calculate area from grid position with 20% buffer to catch grass at edges
-            local halfSize = HarvestPropertyTracker.GRID_SIZE / 2
+            local halfSize = GroundPropertyTracker.GRID_SIZE / 2
             local buffer = halfSize * 0.2  -- 20% buffer
             local sx = self.gridX - halfSize - buffer
             local sz = self.gridZ - halfSize - buffer
@@ -70,7 +70,7 @@ function PilePropertyUpdateEvent:run(connection)
 
             -- Get the appropriate hay type for this grass type
             local grassFillTypeName = g_fillTypeManager:getFillTypeNameByIndex(self.fillTypeIndex)
-            local hayFillTypeName = HarvestPropertyTracker.GRASS_CONVERSION_MAP[grassFillTypeName]
+            local hayFillTypeName = GroundPropertyTracker.GRASS_CONVERSION_MAP[grassFillTypeName]
             local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayFillTypeName)
             
             if hayFillType then
