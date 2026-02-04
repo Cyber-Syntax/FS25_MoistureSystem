@@ -99,15 +99,15 @@ function MoistureSystem:updateMoistureLevel(delta)
 
     local rateFactor = 0
     if temperature >= 45 then
-        rateFactor = temperature * 0.00128
+        rateFactor = temperature * 0.001024
     elseif temperature >= 35 then
-        rateFactor = temperature * 0.0009387
+        rateFactor = temperature * 0.00075096
     elseif temperature >= 25 then
-        rateFactor = temperature * 0.0004053
+        rateFactor = temperature * 0.00032424
     elseif temperature >= 15 then
-        rateFactor = temperature * 0.000128
+        rateFactor = temperature * 0.0001024
     else
-        rateFactor = temperature * 0.0000533
+        rateFactor = temperature * 0.00004264
     end
 
     moistureDelta = moistureDelta - (rateFactor * scaledDelta * sunFactor * self.settings.moistureLossMultiplier)
