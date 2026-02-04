@@ -165,12 +165,19 @@ function MoistureSystem:getMoistureAtPosition(x, z)
     -- Higher elevation = lower moisture, lower elevation = higher moisture
     local heightRange = self.maxHeight - self.minHeight
     if heightRange > 0 then
-        -- Calculate proportional difference from midHeight (-1 to +1 range)
         local heightDiff = height - self.midHeight
         local heightFactor = heightDiff / (heightRange / 2)
 
-        -- Adjust moisture: higher elevation reduces moisture, lower increases it
-        moistureLevel = self.currentMoisturePercent - (heightFactor * 0.02)
+        local headroomAbove = maxMoisture - self.currentMoisturePercent
+        local headroomBelow = self.currentMoisturePercent - minMoisture
+        local maxAdjustmentUp = math.min(0.02, 0.8 * headroomAbove)
+        local maxAdjustmentDown = math.min(0.02, 0.8 * headroomBelow)
+
+        if heightFactor < 0 then
+            moistureLevel = self.currentMoisturePercent - (heightFactor * maxAdjustmentUp)
+        else
+            moistureLevel = self.currentMoisturePercent - (heightFactor * maxAdjustmentDown)
+        end
         moistureLevel = math.max(minMoisture, math.min(maxMoisture, moistureLevel))
     else
         moistureLevel = self.currentMoisturePercent
