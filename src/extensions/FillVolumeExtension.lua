@@ -26,6 +26,10 @@ function MSFillVolumeExtension:onFillUnitFillLevelChanged(superFunc, fillUnitInd
         return
     end
 
+    if toolType == ToolType.TRIGGER then
+        return
+    end
+
     local moistureSystem = g_currentMission.MoistureSystem
     if not moistureSystem:shouldTrackFillType(fillType) then
         return
