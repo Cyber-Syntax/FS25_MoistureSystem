@@ -55,6 +55,9 @@ function MSMowerExtension:processDropArea(superFunc, dropArea, dt)
     tracker:addPile(sx, sz, wx, wz, hx, hz, dropArea.fillType, dropped, {
         moisture = moisture
     })
+    
+    -- Mark area as mowed for tracking purposes
+    tracker:markAreaMowed(sx, sz, wx, wz, hx, hz)
 end
 
 Mower.processDropArea = Utils.overwrittenFunction(Mower.processDropArea, MSMowerExtension.processDropArea)

@@ -8,13 +8,14 @@ function PilePropertyUpdateEvent.emptyNew()
     return self
 end
 
-function PilePropertyUpdateEvent.new(key, properties, fillTypeIndex, gridX, gridZ)
+function PilePropertyUpdateEvent.new(key, properties, fillTypeIndex, gridX, gridZ, allowConversion)
     local self = PilePropertyUpdateEvent.emptyNew()
     self.key = key
     self.properties = properties or {}
     self.fillTypeIndex = fillTypeIndex
     self.gridX = gridX
     self.gridZ = gridZ
+    self.allowConversion = allowConversion or false
     return self
 end
 
@@ -23,6 +24,7 @@ function PilePropertyUpdateEvent:writeStream(streamId, connection)
     streamWriteInt32(streamId, self.fillTypeIndex)
     streamWriteFloat32(streamId, self.gridX)
     streamWriteFloat32(streamId, self.gridZ)
+    streamWriteBool(streamId, self.allowConversion)
 
     -- Write moisture property
     local hasMoisture = self.properties.moisture ~= nil
@@ -37,6 +39,7 @@ function PilePropertyUpdateEvent:readStream(streamId, connection)
     self.fillTypeIndex = streamReadInt32(streamId)
     self.gridX = streamReadFloat32(streamId)
     self.gridZ = streamReadFloat32(streamId)
+    self.allowConversion = streamReadBool(streamId)
 
     self.properties = {}
     local hasMoisture = streamReadBool(streamId)
@@ -50,13 +53,13 @@ end
 function PilePropertyUpdateEvent:run(connection)
     if not connection:getIsServer() then
         g_server:broadcastEvent(PilePropertyUpdateEvent.new(
-            self.key, self.properties, self.fillTypeIndex, self.gridX, self.gridZ
+            self.key, self.properties, self.fillTypeIndex, self.gridX, self.gridZ, self.allowConversion
         ))
     end
 
     local tracker = g_currentMission.groundPropertyTracker
     local isGrass = g_currentMission.MoistureSystem:isGrassFillType(self.fillTypeIndex)
-    if isGrass and self.properties.moisture and self.properties.moisture <= MSTedderExtension.DRY_THRESHOLD then
+    if isGrass and self.allowConversion and self.properties.moisture and self.properties.moisture <= MSTedderExtension.DRY_THRESHOLD then
         if g_currentMission:getIsServer() then
             -- Calculate area from grid position with 20% buffer to catch grass at edges
             local halfSize = GroundPropertyTracker.GRID_SIZE / 2
