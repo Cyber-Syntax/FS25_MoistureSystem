@@ -204,9 +204,8 @@ function MoistureSystem:firstLoad()
     local minMoisture = monthData.Min
     local maxMoisture = monthData.Max
 
-    -- Set current moisture to 25% below maximum, converted to 0-1 scale
-    local moistureRange = maxMoisture - minMoisture
-    local startMoisture = maxMoisture - (moistureRange * 0.25)
+    -- Set current moisture to 85% of maximum, converted to 0-1 scale
+    local startMoisture = maxMoisture * 0.85
     self.currentMoisturePercent = startMoisture / 100
 end
 
