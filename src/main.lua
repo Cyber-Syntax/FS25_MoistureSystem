@@ -85,7 +85,7 @@ function MoistureSystem:updateMoistureLevel(delta)
 
     -- Gain moisture from rain/snow
     if rainfall > 0 or snowfall > 0 then
-        moistureDelta = (rainfall + snowfall * 0.75) * 0.009 * scaledDelta *
+        moistureDelta = (rainfall + snowfall * 0.75) * 0.009945 * scaledDelta *
             self.settings.moistureGainMultiplier
         self:adjustMoisture(moistureDelta)
         return
@@ -136,8 +136,13 @@ function MoistureSystem:adjustMoisture(delta)
     local minMoisture = monthData.Min / 100
     local maxMoisture = monthData.Max / 100
 
-    -- Apply delta and clamp to min/max range
-    local newMoisture = math.max(minMoisture, math.min(maxMoisture, self.currentMoisturePercent + delta))
+    -- Calculate 80% of range to leave headroom for terrain-based variation
+    local rangeSize = maxMoisture - minMoisture
+    local innerMin = minMoisture + (rangeSize * 0.1)
+    local innerMax = maxMoisture - (rangeSize * 0.1)
+
+    -- Apply delta and clamp to 80% of range
+    local newMoisture = math.max(innerMin, math.min(innerMax, self.currentMoisturePercent + delta))
 
     -- Only send event if value changed
     if newMoisture ~= self.currentMoisturePercent then
@@ -166,18 +171,25 @@ function MoistureSystem:getMoistureAtPosition(x, z)
     local heightRange = self.maxHeight - self.minHeight
     if heightRange > 0 then
         local heightDiff = height - self.midHeight
-        local heightFactor = heightDiff / (heightRange / 2)
-
+        
         local headroomAbove = maxMoisture - self.currentMoisturePercent
         local headroomBelow = self.currentMoisturePercent - minMoisture
         local maxAdjustmentUp = math.min(0.02, 0.8 * headroomAbove)
         local maxAdjustmentDown = math.min(0.02, 0.8 * headroomBelow)
 
-        if heightFactor < 0 then
+        local heightFactor
+        if heightDiff < 0 then
+            -- Below midHeight: use distance to minHeight as range
+            local rangeToMin = self.midHeight - self.minHeight
+            heightFactor = rangeToMin > 0 and (heightDiff / rangeToMin) or 0
             moistureLevel = self.currentMoisturePercent - (heightFactor * maxAdjustmentUp)
         else
+            -- Above midHeight: use distance to maxHeight as range
+            local rangeToMax = self.maxHeight - self.midHeight
+            heightFactor = rangeToMax > 0 and (heightDiff / rangeToMax) or 0
             moistureLevel = self.currentMoisturePercent - (heightFactor * maxAdjustmentDown)
         end
+        
         moistureLevel = math.max(minMoisture, math.min(maxMoisture, moistureLevel))
     else
         moistureLevel = self.currentMoisturePercent
@@ -227,12 +239,9 @@ function MoistureSystem:setHeights()
         local midIndex = math.ceil(#heights / 2)
         self.midHeight = heights[midIndex]
 
-        -- Use IQR for min/max (25th and 75th percentile)
-        local q1Index = math.max(1, math.ceil(#heights * 0.25))
-        local q3Index = math.min(#heights, math.ceil(#heights * 0.75))
-
-        self.minHeight = heights[q1Index]
-        self.maxHeight = heights[q3Index]
+        -- Use full range (min and max) so heightFactor stays within [-1, 1]
+        self.minHeight = heights[1]
+        self.maxHeight = heights[#heights]
     else
         self.minHeight = 0
         self.maxHeight = 0
