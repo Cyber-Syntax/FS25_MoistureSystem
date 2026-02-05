@@ -206,7 +206,7 @@ FSBaseMission.saveSavegame = Utils.appendedFunction(FSBaseMission.saveSavegame, 
 function MoistureSystem:onStartMission()
     CropValueMap.initialize()  -- Convert fillType names to indices
     local ms = g_currentMission.MoistureSystem
-    ms:findMidHeight()  -- Calculate terrain height range
+    ms:setHeights()  -- Calculate terrain height range
     
     if g_currentMission:getIsServer() then
         -- Initialize mod on new game
@@ -537,10 +537,10 @@ end
 ## Important Limitations
 
 ### Game Engine
-1. **No native filltype properties** - Ca
-- [ ] Test volume-weighted averaging when merging piles
-- [ ] Verify network events sync properly across clients
-- [ ] Test fillType conversions (grass→hay) cleanup tracking data
+1. **No native filltype properties** - Cannot store moisture directly on density map
+2. **Area tracking required** - Must maintain parallel data structure for custom properties
+3. **Approximate coordinates** - Pile positions are simplified rectangles
+4. **Volume queries required** - Always query actual density map volume for accurate weighted averaging
 
 ## Performance Considerations
 
@@ -550,11 +550,7 @@ end
 4. **Cleanup tracking** - Remove empty piles from tracking immediately after pickup/conversion
 5. **Cooldown timers** - Use cycle-based counters instead of timestamps for efficiency
 6. **Separate storage** - Keep grass separate from crops to reduce lookup collisions
-7. **Early returns** - Check `isServer` and nil values before expensive operationsnnot store moisture directly on density map
-2. **Area tracking required** - Must maintain parallel data structure
-3. **Approximate coordinates** - Pile positions are simplified rectangles
-4. *Extensions**: Prefix with `MS` (e.g., `MSCombineExtension`, `MSTedderExtension`)
-- **Functions**: camelCase (e.g., `getMoistureAtPosition`)
+7. **Early returns** - Check `isServer` and nil values before expensive operations
 8. **fillTypeName vs fillType** - Store fillTypeName (string) in save data, use fillType (index) in runtime logic
 9. **Volume is negative on discharge** - `dischargedLiters` is negative, use `math.abs()` for volume
 10. **Check for nil before access** - Chain of property access can fail at any point (`a.b.c` → check each)
@@ -562,6 +558,7 @@ end
 12. **Density map accuracy** - Query actual density map volume for accurate volume-weighted averaging, don't trust cached values
 13. **Extension self reference** - Extensions add `self` as first param after `superFunc`, not before
 14. **Cooldown counters** - Decrement counters in update loop, remove when ≤ 0, not == 0
+15. **Cache invalidation** - Clear moisture cache when currentMoisturePercent changes or month transitions occur
 
 ## Volume-Weighted Averaging Pattern
 
@@ -583,6 +580,13 @@ if totalVolume > 0 then
     newValue = (existingValue * existingVolume + incomingValue * incomingVolume) / totalVolume
 end
 ```
+
+## Coding Conventions
+
+### Naming
+- **Classes**: PascalCase (e.g., `GroundPropertyTracker`)
+- **Extensions**: Prefix with `MS` (e.g., `MSCombineExtension`, `MSTedderExtension`)
+- **Functions**: camelCase (e.g., `getMoistureAtPosition`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `GRID_SIZE`, `DRY_THRESHOLD`)
 - **Private methods**: Use `:` prefix in self calls (e.g., `self:getGridPosition()`)
 
@@ -615,21 +619,6 @@ ClassName.functionName = Utils.overwrittenFunction(
     MSExtensionName.functionName
 )
 ```
-- **Classes**: PascalCase (e.g., `GroundPropertyTracker`)
-- **Functions**: camelCase (e.g., `getMoistureAtPosition`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_TRACKED_PILES`)
-- **Private methods**: Use `:` prefix (e.g., `self:addToSpatialGrid()`)
-
-### Structure
-- Use `Class()` for class definitions with metatables
-- Always check `self.isServer` for server-only operations
-- Return early for invalid states
-- Use guard clauses to reduce nesting
-
-### Comments
-- Document public functions with `---` comments
-- Include `@param` and `@return` tags
-- Explain non-obvious algorithms inline
 
 ## Common Gotchas
 
