@@ -39,6 +39,28 @@ function MoistureSystem:loadMap()
     end
 
     self:loadGUI()
+
+    if g_addCheatCommands and g_currentMission:getIsServer() then
+        addConsoleCommand("msSetMoisture", "Set Moisture", "consoleCommandSetMoisture", self)
+    end
+end
+
+-- Local values: height
+function MoistureSystem:consoleCommandSetMoisture(newMoisture)
+    if not g_currentMission:getIsServer() then return end
+    local newMoistureNum = tonumber(newMoisture) / 100
+    if newMoisture == nil or newMoistureNum == nil then
+        return "Usage: msSetMoisture value[1-100]"
+    end
+    g_client:getServerConnection():sendEvent(MoistureUpdateEvent.new(newMoistureNum))
+    return string.format("New moisture is %.3f", newMoistureNum)
+end
+
+function SnowSystem:delete()
+    g_messageCenter:unsubscribeAll(self)
+    if g_addCheatCommands then
+        removeConsoleCommand("msSetMoisture")
+    end
 end
 
 function MoistureSystem:loadGUI()
@@ -171,7 +193,7 @@ function MoistureSystem:getMoistureAtPosition(x, z)
     local heightRange = self.maxHeight - self.minHeight
     if heightRange > 0 then
         local heightDiff = height - self.midHeight
-        
+
         local headroomAbove = maxMoisture - self.currentMoisturePercent
         local headroomBelow = self.currentMoisturePercent - minMoisture
         local maxAdjustmentUp = math.min(0.02, 0.8 * headroomAbove)
@@ -189,7 +211,7 @@ function MoistureSystem:getMoistureAtPosition(x, z)
             heightFactor = rangeToMax > 0 and (heightDiff / rangeToMax) or 0
             moistureLevel = self.currentMoisturePercent - (heightFactor * maxAdjustmentDown)
         end
-        
+
         moistureLevel = math.max(minMoisture, math.min(maxMoisture, moistureLevel))
     else
         moistureLevel = self.currentMoisturePercent
