@@ -531,7 +531,7 @@ end
 - Counters decremented each cycle: `counter = counter - 1`
 - Remove when `counter <= 0`, not `== 0`
 - Examples:
-  - `processedTeddedCells[gridKey]` - 10 cycles = 5 seconds cooldown
+  - `teddedGridCellsCooldown[gridKey]` - 10 cycles = 5 seconds cooldown
   - `hayCells[gridKey]` - 10 cycles = 5 seconds to prevent grass reappearing
 
 ## Important Limitations

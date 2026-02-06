@@ -6,7 +6,7 @@ GroundPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
 GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
 
 GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
-GroundPropertyTracker.MOWED_COOLDOWN_CYCLES = 6
+GroundPropertyTracker.DELAYED_PROCESSING_CYCLES = 4
 
 GroundPropertyTracker.GRASS_CONVERSION_MAP = {
     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
@@ -23,22 +23,26 @@ function GroundPropertyTracker.new()
     -- Main storage: grid-based piles indexed by "gridX_gridZ_fillType"
     self.gridPiles = {}
 
-    -- Separate storage for grass/grass windrow piles
+    -- Separate storage for grass piles
     self.grassPiles = {}
+
+    -- Buffer for tedded grid cells (delays processing by 6 cycles)
+    -- Value is number of update cycles remaining before moving to teddedGridCells
+    self.teddedGridCellsBuffer = {}
 
     -- Track tedded grid cells (will apply additional moisture reduction)
     self.teddedGridCells = {}
 
     -- Track processed tedded cells with cooldown counter to prevent re-marking
     -- Value is number of update cycles remaining before cell can be marked again
-    self.processedTeddedCells = {}
+    self.teddedGridCellsCooldown = {}
 
     -- Track processed mowed cells with cooldown counter to prevent re-marking
     -- Value is number of update cycles remaining before cell can be marked again
     self.recentMowedCells = {}
 
     -- Track cells that are designated as "hay cells" (recently converted to hay)
-    -- Value is number of update cycles remaining (10 cycles = 5 seconds at 500ms/cycle)
+    -- Value is number of update cycles remaining
     self.hayCells = {}
 
     -- Track moisture of grass being moved by tedder
@@ -259,8 +263,8 @@ function GroundPropertyTracker:getPropertiesAtLocation(x, z, fillType)
 end
 
 ---
--- Mark an area as tedded by setting all overlapping grid cells to true
--- Only marks cells that haven't been processed recently (2 second cooldown)
+-- Mark an area as tedded by adding to buffer with 6-cycle delay
+-- Only marks cells that haven't been processed recently (5 second cooldown)
 -- @param sx, sz, wx, wz, hx, hz: Area corner coordinates
 ---
 function GroundPropertyTracker:markAreaTedded(sx, sz, wx, wz, hx, hz)
@@ -269,13 +273,13 @@ function GroundPropertyTracker:markAreaTedded(sx, sz, wx, wz, hx, hz)
     -- Get all grid cells this area overlaps
     local affectedCells = self:getAffectedGridCells(sx, sz, wx, wz, hx, hz)
 
-    -- Mark each cell as tedded only if not recently processed
+    -- Add each cell to buffer with 6-cycle delay, only if not recently processed
     for _, cell in ipairs(affectedCells) do
         local gridKey = self:getSimpleGridKey(cell.gridX, cell.gridZ)
 
-        -- Only mark if not in cooldown
-        if not self.processedTeddedCells[gridKey] then
-            self.teddedGridCells[gridKey] = true
+        -- Only mark if not in cooldown and not already in buffer
+        if not self.teddedGridCellsCooldown[gridKey] and not self.teddedGridCellsBuffer[gridKey] then
+            self.teddedGridCellsBuffer[gridKey] = GroundPropertyTracker.DELAYED_PROCESSING_CYCLES
         end
     end
 end
@@ -297,7 +301,7 @@ function GroundPropertyTracker:markAreaMowed(sx, sz, wx, wz, hx, hz)
 
         -- Set cooldown to prevent drying for newly mowed grass
         if not self.recentMowedCells[gridKey] then
-            self.recentMowedCells[gridKey] = GroundPropertyTracker.MOWED_COOLDOWN_CYCLES
+            self.recentMowedCells[gridKey] = GroundPropertyTracker.DELAYED_PROCESSING_CYCLES
         end
     end
 end
@@ -437,7 +441,7 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                         -- Mark this cell as processed so we don't reduce it again in the second loop
                         processedThisCycle[gridKey] = true
                         -- Start cooldown to prevent immediate re-tedding
-                        self.processedTeddedCells[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
+                        self.teddedGridCellsCooldown[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
                     end
                 end
             end
@@ -468,7 +472,7 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                 ))
 
                 -- Start cooldown for existing pile that was tedded
-                self.processedTeddedCells[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
+                self.teddedGridCellsCooldown[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
             else
                 -- No tedding, just apply natural moisture change
                 local newMoisture = pile.properties.moisture + totalDelta
@@ -482,10 +486,10 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
     end
 
     -- Decrement cooldown counters for processed tedded cells
-    for gridKey, counter in pairs(self.processedTeddedCells) do
-        self.processedTeddedCells[gridKey] = counter - 1
-        if self.processedTeddedCells[gridKey] <= 0 then
-            self.processedTeddedCells[gridKey] = nil
+    for gridKey, counter in pairs(self.teddedGridCellsCooldown) do
+        self.teddedGridCellsCooldown[gridKey] = counter - 1
+        if self.teddedGridCellsCooldown[gridKey] <= 0 then
+            self.teddedGridCellsCooldown[gridKey] = nil
         end
     end
 
@@ -502,6 +506,15 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
         self.hayCells[gridKey] = counter - 1
         if self.hayCells[gridKey] <= 0 then
             self.hayCells[gridKey] = nil
+        end
+    end
+
+    -- Process tedded cells buffer: decrement and move to teddedGridCells when ready
+    for gridKey, counter in pairs(self.teddedGridCellsBuffer) do
+        self.teddedGridCellsBuffer[gridKey] = counter - 1
+        if self.teddedGridCellsBuffer[gridKey] <= 0 then
+            self.teddedGridCellsBuffer[gridKey] = nil
+            self.teddedGridCells[gridKey] = true
         end
     end
 end

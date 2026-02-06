@@ -57,8 +57,7 @@ function MoistureSystem:consoleCommandSetMoisture(newMoisture)
     return string.format("New moisture is %.3f", newMoistureNum)
 end
 
-function SnowSystem:delete()
-    g_messageCenter:unsubscribeAll(self)
+function MoistureSystem:delete()
     if g_addCheatCommands then
         removeConsoleCommand("msSetMoisture")
     end
