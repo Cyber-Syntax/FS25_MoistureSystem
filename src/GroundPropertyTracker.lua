@@ -1,7 +1,7 @@
 GroundPropertyTracker = {}
 local GroundPropertyTracker_mt = Class(GroundPropertyTracker)
 
-GroundPropertyTracker.GRID_SIZE = 2             -- 2m grid cells for consistent world grid
+GroundPropertyTracker.GRID_SIZE = 2
 GroundPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
 GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
 
@@ -717,17 +717,18 @@ function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
     setXMLInt(xmlFile, key .. "#gridSize", GroundPropertyTracker.GRID_SIZE)
 
     local i = 0
-    -- Save crop piles
+    -- Save crop piles (optimized format)
     for gridKey, pile in pairs(self.gridPiles) do
-        local pileKey = string.format("%s.cropPiles.pile(%d)", key, i)
+        local pileKey = string.format("%s.cropPiles.p(%d)", key, i)
 
-        setXMLInt(xmlFile, pileKey .. "#fillType", pile.fillType)
-        setXMLFloat(xmlFile, pileKey .. "#gridX", pile.gridX)
-        setXMLFloat(xmlFile, pileKey .. "#gridZ", pile.gridZ)
+        setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
+        setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
+        setXMLInt(xmlFile, pileKey .. "#z", math.floor(pile.gridZ))
 
-        -- Save moisture
+        -- Save moisture with 3 decimal precision
         if pile.properties.moisture then
-            setXMLFloat(xmlFile, pileKey .. "#moisture", pile.properties.moisture)
+            local roundedMoisture = math.floor(pile.properties.moisture * 1000 + 0.5) / 1000
+            setXMLFloat(xmlFile, pileKey .. "#m", roundedMoisture)
         end
 
         i = i + 1
@@ -735,24 +736,44 @@ function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
 
     local cropCount = i
 
-    -- Save grass piles
+    -- Save grass piles (optimized format)
     i = 0
     for gridKey, pile in pairs(self.grassPiles) do
-        local pileKey = string.format("%s.grassPiles.pile(%d)", key, i)
+        local pileKey = string.format("%s.grassPiles.p(%d)", key, i)
 
-        setXMLInt(xmlFile, pileKey .. "#fillType", pile.fillType)
-        setXMLFloat(xmlFile, pileKey .. "#gridX", pile.gridX)
-        setXMLFloat(xmlFile, pileKey .. "#gridZ", pile.gridZ)
+        setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
+        setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
+        setXMLInt(xmlFile, pileKey .. "#z", math.floor(pile.gridZ))
 
-        -- Save moisture
+        -- Save moisture with 3 decimal precision
         if pile.properties.moisture then
-            setXMLFloat(xmlFile, pileKey .. "#moisture", pile.properties.moisture)
+            local roundedMoisture = math.floor(pile.properties.moisture * 1000 + 0.5) / 1000
+            setXMLFloat(xmlFile, pileKey .. "#m", roundedMoisture)
         end
 
         i = i + 1
     end
 
     -- print(string.format("GroundPropertyTracker: Saved %d crop piles, %d grass piles", cropCount, i))
+end
+
+---
+-- Load pile data from old format (backward compatibility - can be removed in future)
+-- @param xmlFile: XML file handle
+-- @param pileKey: XML key for pile
+-- @return fillType, gridX, gridZ, moisture (or nil if not found)
+---
+function GroundPropertyTracker:loadPileLegacyFormat(xmlFile, pileKey)
+    if not hasXMLProperty(xmlFile, pileKey) then
+        return nil
+    end
+
+    local fillType = getXMLInt(xmlFile, pileKey .. "#fillType")
+    local gridX = getXMLFloat(xmlFile, pileKey .. "#gridX")
+    local gridZ = getXMLFloat(xmlFile, pileKey .. "#gridZ")
+    local moisture = getXMLFloat(xmlFile, pileKey .. "#moisture")
+
+    return fillType, gridX, gridZ, moisture
 end
 
 function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
@@ -763,17 +784,25 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
     local i = 0
     local loadedCount = 0
 
-    -- Load crop piles
+    -- Load crop piles (try new format first, fallback to legacy)
     while true do
-        local pileKey = string.format("%s.cropPiles.pile(%d)", key, i)
+        local pileKey = string.format("%s.cropPiles.p(%d)", key, i)
+        local fillType, gridX, gridZ, moisture
 
-        if not hasXMLProperty(xmlFile, pileKey) then
-            break
+        -- Try new optimized format
+        if hasXMLProperty(xmlFile, pileKey) then
+            fillType = getXMLInt(xmlFile, pileKey .. "#f")
+            gridX = getXMLInt(xmlFile, pileKey .. "#x")
+            gridZ = getXMLInt(xmlFile, pileKey .. "#z")
+            moisture = getXMLFloat(xmlFile, pileKey .. "#m")
+        else
+            -- Try legacy format for backward compatibility
+            local legacyKey = string.format("%s.cropPiles.pile(%d)", key, i)
+            fillType, gridX, gridZ, moisture = self:loadPileLegacyFormat(xmlFile, legacyKey)
+            if fillType == nil then
+                break
+            end
         end
-
-        local fillType = getXMLInt(xmlFile, pileKey .. "#fillType")
-        local gridX = getXMLFloat(xmlFile, pileKey .. "#gridX")
-        local gridZ = getXMLFloat(xmlFile, pileKey .. "#gridZ")
 
         local pile = {
             fillType = fillType,
@@ -783,8 +812,6 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
             properties = {}
         }
 
-        -- Load moisture
-        local moisture = getXMLFloat(xmlFile, pileKey .. "#moisture")
         if moisture then
             pile.properties.moisture = moisture
         end
@@ -798,19 +825,27 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
 
     -- local cropCount = loadedCount
 
-    -- Load grass piles
+    -- Load grass piles (try new format first, fallback to legacy)
     i = 0
     loadedCount = 0
     while true do
-        local pileKey = string.format("%s.grassPiles.pile(%d)", key, i)
+        local pileKey = string.format("%s.grassPiles.p(%d)", key, i)
+        local fillType, gridX, gridZ, moisture
 
-        if not hasXMLProperty(xmlFile, pileKey) then
-            break
+        -- Try new optimized format
+        if hasXMLProperty(xmlFile, pileKey) then
+            fillType = getXMLInt(xmlFile, pileKey .. "#f")
+            gridX = getXMLInt(xmlFile, pileKey .. "#x")
+            gridZ = getXMLInt(xmlFile, pileKey .. "#z")
+            moisture = getXMLFloat(xmlFile, pileKey .. "#m")
+        else
+            -- Try legacy format for backward compatibility
+            local legacyKey = string.format("%s.grassPiles.pile(%d)", key, i)
+            fillType, gridX, gridZ, moisture = self:loadPileLegacyFormat(xmlFile, legacyKey)
+            if fillType == nil then
+                break
+            end
         end
-
-        local fillType = getXMLInt(xmlFile, pileKey .. "#fillType")
-        local gridX = getXMLFloat(xmlFile, pileKey .. "#gridX")
-        local gridZ = getXMLFloat(xmlFile, pileKey .. "#gridZ")
 
         local pile = {
             fillType = fillType,
@@ -820,8 +855,6 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
             properties = {}
         }
 
-        -- Load moisture
-        local moisture = getXMLFloat(xmlFile, pileKey .. "#moisture")
         if moisture then
             pile.properties.moisture = moisture
         end
