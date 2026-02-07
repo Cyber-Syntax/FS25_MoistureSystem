@@ -23,6 +23,7 @@ Beta Changelog:
 
 0.0.0.3 [WIP]:
 - Fix an issue when harvesting different moisture levels and how volume weighting is calculated.
+- Fix issues with forage wagons keeping moisture levels when unloading and loading.
 
 0.0.0.2:
 - Add console command "msSetMoisture" for testing (usage: msSetMoisture value[1-100]). Will not violate the months range.

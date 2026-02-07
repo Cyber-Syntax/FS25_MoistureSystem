@@ -107,6 +107,11 @@ function MSDischargeableExtension:dischargeToGround(superFunc, dischargeNode, em
         { moisture = moisture }
     )
 
+    -- Clean up moisture tracking if vehicle is now empty of this fillType
+    if not moistureSystem:hasFillType(self.uniqueId, fillType) then
+        moistureSystem:setObjectMoisture(self.uniqueId, fillType, nil)
+    end
+
     return dischargedLiters, minDropReached, hasMinDropFillLevel
 end
 
