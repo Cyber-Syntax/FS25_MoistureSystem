@@ -48,8 +48,6 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
 
 
     local tracker = g_currentMission.groundPropertyTracker
-    -- local grassFillTypeIndex = g_fillTypeManager:getFillTypeIndexByName("GRASS_WINDROW")
-    -- local hayFillTypeIndex = g_fillTypeManager:getFillTypeIndexByName("DRYGRASS_WINDROW")
 
     local sx, sy, sz = getWorldTranslation(workArea.start)
     local wx, wy, wz = getWorldTranslation(workArea.width)

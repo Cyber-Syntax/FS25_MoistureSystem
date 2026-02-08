@@ -6,7 +6,7 @@ GroundPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
 GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
 
 GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
-GroundPropertyTracker.DELAYED_PROCESSING_CYCLES = 4
+GroundPropertyTracker.DELAYED_PROCESSING_CYCLES = 2
 
 GroundPropertyTracker.GRASS_CONVERSION_MAP = {
     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
