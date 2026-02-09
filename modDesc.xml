@@ -21,8 +21,9 @@ Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Beta Changelog:
 
-0.0.0.4 [WIP]:
-- Fix issue deposting material into husbandries.
+0.0.0.4:
+- Fix game breaking deposting material into husbandries.
+- Adds bale rotting system.
 
 0.0.0.3:
 - Fix an issue when harvesting different moisture levels and how volume weighting is calculated.

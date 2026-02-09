@@ -39,7 +39,9 @@
 		<text name="moistureSystem_rainExposure" text="Rain Exposure"/>
 		<text name="moistureSystem_baleStatus" text="Status"/>
 		<text name="moistureSystem_baleGettingWet" text="Getting Wet"/>
+		<text name="moistureSystem_baleRottingSlowly" text="Rotting Slowly"/>
 		<text name="moistureSystem_baleRotting" text="Rotting"/>
+		<text name="moistureSystem_baleRottingQuickly" text="Rotting Quickly"/>
 		<text name="moistureSystem_baleDrying" text="Drying"/>
 		
 		<!-- GUI -->
