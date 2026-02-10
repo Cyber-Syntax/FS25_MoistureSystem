@@ -63,6 +63,8 @@ function PilePropertyUpdateEvent:run(connection)
         storage = tracker.grassPiles
     elseif moistureSystem:isHayFillType(self.fillTypeIndex) then
         storage = tracker.hayPiles
+    elseif moistureSystem:isStrawFillType(self.fillTypeIndex) then
+        storage = tracker.strawPiles
     else
         storage = tracker.gridPiles
     end

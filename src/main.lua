@@ -153,6 +153,7 @@ function MoistureSystem:updateMoistureLevel(delta)
     if g_currentMission.groundPropertyTracker then
         g_currentMission.groundPropertyTracker:updateGrassMoisture(moistureDelta)
         g_currentMission.groundPropertyTracker:updateHayMoisture(moistureDelta)
+        g_currentMission.groundPropertyTracker:updateStrawMoisture(moistureDelta)
     end
 end
 
@@ -519,6 +520,15 @@ function MoistureSystem:isHayFillType(fillType)
 end
 
 ---
+-- Check if fillType is straw
+-- @param fillType: The filltype index
+-- @return true if straw type
+---
+function MoistureSystem:isStrawFillType(fillType)
+    return fillType == FillType.STRAW
+end
+
+---
 -- Check if fillType should be tracked (defined in CropValueMap or special types)
 -- @param fillType: The filltype index
 -- @return true if should be tracked
@@ -529,7 +539,7 @@ function MoistureSystem:shouldTrackFillType(fillType)
     end
     
     -- Track straw
-    if fillType == FillType.STRAW then
+    if self:isStrawFillType(fillType) then
         return true
     end
     

@@ -38,6 +38,9 @@ function GroundPropertyTracker.new()
     -- Separate storage for hay piles
     self.hayPiles = {}
 
+    -- Separate storage for straw piles
+    self.strawPiles = {}
+
     -- Buffer for tedded grid cells (delays processing by 6 cycles)
     -- Value is number of update cycles remaining before moving to teddedGridCells
     self.teddedGridCellsBuffer = {}
@@ -68,6 +71,10 @@ function GroundPropertyTracker.new()
     -- Track grass rotting accumulators
     -- Key: "gridX_gridZ_fillType", Value: accumulated liters waiting for removal
     self.grassRotAccumulators = {}
+
+    -- Track straw rotting accumulators
+    -- Key: "gridX_gridZ_fillType", Value: accumulated liters waiting for removal
+    self.strawRotAccumulators = {}
 
     return self
 end
@@ -108,7 +115,9 @@ function GroundPropertyTracker:delete()
     self.gridPiles = {}
     self.grassPiles = {}
     self.hayPiles = {}
+    self.strawPiles = {}
     self.grassRotAccumulators = {}
+    self.strawRotAccumulators = {}
 end
 
 ---
@@ -207,7 +216,14 @@ function GroundPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume,
     if #affectedCells == 0 or totalOverlapArea == 0 then return end
 
     -- Choose storage based on fillType
-    local storage = moistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or self.gridPiles
+    local storage
+    if moistureSystem:isGrassOnGroundFillType(fillType) then
+        storage = self.grassPiles
+    elseif moistureSystem:isStrawFillType(fillType) then
+        storage = self.strawPiles
+    else
+        storage = self.gridPiles
+    end
 
     -- Distribute proportionally based on overlap area
     for _, cell in ipairs(affectedCells) do
@@ -262,8 +278,15 @@ end
 -- @return properties table or nil
 ---
 function GroundPropertyTracker:getPropertiesAtLocation(x, z, fillType)
-    local storage = g_currentMission.MoistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or
-    self.gridPiles
+    local moistureSystem = g_currentMission.MoistureSystem
+    local storage
+    if moistureSystem:isGrassOnGroundFillType(fillType) then
+        storage = self.grassPiles
+    elseif moistureSystem:isStrawFillType(fillType) then
+        storage = self.strawPiles
+    else
+        storage = self.gridPiles
+    end
     local gridX, gridZ = self:getGridPosition(x, z)
     local key = self:getGridKey(gridX, gridZ, fillType)
     local pile = storage[key]
@@ -637,19 +660,50 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
             if self.grassRotAccumulators[key] >= GroundPropertyTracker.ROT_REMOVAL_THRESHOLD then
                 local removalAmount = GroundPropertyTracker.ROT_REMOVAL_THRESHOLD
 
-                -- Get cell center point for removal
+                -- Get grid cell corners for removal area
                 local gridX = pile.gridX
                 local gridZ = pile.gridZ
-                local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
+                local halfSize = GroundPropertyTracker.GRID_SIZE / 2
 
-                -- Calculate line coordinates for removal (use small radius around grid center)
-                local lsx, lsy, lsz = gridX - checkRadius,
-                    getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, gridX - checkRadius, 0,
-                        gridZ - checkRadius), gridZ - checkRadius
-                local lex, ley, lez = gridX + checkRadius,
-                    getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, gridX + checkRadius, 0,
-                        gridZ + checkRadius), gridZ + checkRadius
-                local lineRadius = checkRadius
+                -- First verify there's actually material at this location
+                -- local checkRadius = halfSize
+                -- local existingVolume = DensityMapHeightUtil.getFillLevelAtArea(
+                --     pile.fillType,
+                --     gridX - checkRadius, gridZ - checkRadius,
+                --     gridX + checkRadius, gridZ - checkRadius,
+                --     gridX - checkRadius, gridZ + checkRadius
+                -- )
+
+                -- if existingVolume <= 0 then
+                --     -- No material found, cleanup tracker and accumulator
+                --     self.grassRotAccumulators[key] = nil
+                --     self:checkPileHasContent(gridX, gridZ, pile.fillType)
+                --     continue
+                -- end
+
+                if not self:checkPileHasContent(gridX, gridZ, pile.fillType) then
+                    -- No material found, cleanup tracker and accumulator
+                    self.grassRotAccumulators[key] = nil
+                    continue
+                end
+
+                -- Define the three corners of the grid cell area
+                local sx = gridX - halfSize
+                local sz = gridZ - halfSize
+                local sy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, sx, 0, sz)
+
+                local wx = gridX + halfSize
+                local wz = gridZ - halfSize
+                local wy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wx, 0, wz)
+
+                local hx = gridX - halfSize
+                local hz = gridZ + halfSize
+                local hy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, hx, 0, hz)
+
+                -- Calculate proper line coordinates for the area (like tedder does)
+                local lsx, lsy, lsz, lex, ley, lez, lineRadius = DensityMapHeightUtil.getLineByAreaDimensions(
+                    sx, sy, sz, wx, wy, wz, hx, hy, hz, true
+                )
 
                 -- Remove grass from density map (negative amount = pickup)
                 local removed = DensityMapHeightUtil.tipToGroundAroundLine(
@@ -658,7 +712,7 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                     pile.fillType,  -- grass fillType
                     lsx, lsy, lsz,  -- start position
                     lex, ley, lez,  -- end position
-                    lineRadius,     -- radius
+                    2,              -- radius
                     nil,            -- line offset
                     nil,            -- last line offset
                     false,          -- create piles
@@ -775,9 +829,119 @@ function GroundPropertyTracker:updateHayMoisture(moistureDelta)
 end
 
 ---
+-- Update moisture levels for all straw piles
+-- Straw rots away when moisture > 15% (similar to grass)
+-- @param moistureDelta: Amount to change moisture (can be positive or negative)
+---
+function GroundPropertyTracker:updateStrawMoisture(moistureDelta)
+    if not self.isServer then return end
+    if moistureDelta == 0 then return end
+
+    -- Update all straw piles
+    for key, pile in pairs(self.strawPiles) do
+        if pile.properties.moisture then
+            -- Apply natural moisture change (no max clamp, straw can get very wet)
+            local newMoisture = pile.properties.moisture + moistureDelta
+            pile.properties.moisture = math.max(0, newMoisture)
+
+            -- Sync pile update to clients
+            g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
+                key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
+            ))
+        end
+    end
+
+    -- Process straw rotting (wet straw gradually decays)
+    for key, pile in pairs(self.strawPiles) do
+        if pile.properties.moisture and pile.properties.moisture > GroundPropertyTracker.ROT_MOISTURE_THRESHOLD then
+            -- Initialize accumulator if not exists
+            if not self.strawRotAccumulators[key] then
+                self.strawRotAccumulators[key] = 0
+            end
+
+            -- Add randomized accumulation amount
+            local randomAmount = GroundPropertyTracker.ROT_ACCUMULATION_MIN +
+                math.random() * (GroundPropertyTracker.ROT_ACCUMULATION_MAX - GroundPropertyTracker.ROT_ACCUMULATION_MIN)
+            self.strawRotAccumulators[key] = self.strawRotAccumulators[key] + randomAmount
+
+            -- Check if threshold reached
+            if self.strawRotAccumulators[key] >= GroundPropertyTracker.ROT_REMOVAL_THRESHOLD then
+                local removalAmount = GroundPropertyTracker.ROT_REMOVAL_THRESHOLD
+
+                -- Get grid cell corners for removal area
+                local gridX = pile.gridX
+                local gridZ = pile.gridZ
+                local halfSize = GroundPropertyTracker.GRID_SIZE / 2
+
+                -- First verify there's actually material at this location
+                -- local checkRadius = halfSize
+                -- local existingVolume = DensityMapHeightUtil.getFillLevelAtArea(
+                --     pile.fillType,
+                --     gridX - checkRadius, gridZ - checkRadius,
+                --     gridX + checkRadius, gridZ - checkRadius,
+                --     gridX - checkRadius, gridZ + checkRadius
+                -- )
+
+                local hasContent = self:checkPileHasContent(gridX, gridZ, pile.fillType)
+                if not hasContent then
+                    self.strawRotAccumulators[key] = nil
+                    continue
+                end
+
+                -- Define the three corners of the grid cell area
+                local sx = gridX - halfSize
+                local sz = gridZ - halfSize
+                local sy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, sx, 0, sz)
+
+                local wx = gridX + halfSize
+                local wz = gridZ - halfSize
+                local wy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wx, 0, wz)
+
+                local hx = gridX - halfSize
+                local hz = gridZ + halfSize
+                local hy = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, hx, 0, hz)
+
+                -- Calculate proper line coordinates for the area (like tedder does)
+                local lsx, lsy, lsz, lex, ley, lez, lineRadius = DensityMapHeightUtil.getLineByAreaDimensions(
+                    sx, sy, sz, wx, wy, wz, hx, hy, hz, true
+                )
+
+                -- Remove straw from density map (negative amount = pickup)
+                local removed = DensityMapHeightUtil.tipToGroundAroundLine(
+                    nil,            -- object (nil for no object)
+                    -removalAmount, -- negative = pickup
+                    pile.fillType,  -- straw fillType
+                    lsx, lsy, lsz,  -- start position
+                    lex, ley, lez,  -- end position
+                    2,              -- radius
+                    nil,            -- line offset
+                    nil,            -- last line offset
+                    false,          -- create piles
+                    nil             -- function callback
+                )
+
+                if removed ~= 0 then
+                    -- Reset accumulator after removal
+                    self.strawRotAccumulators[key] = 0
+
+                    -- Check if pile still has content, cleanup if empty
+                    self:checkPileHasContent(gridX, gridZ, pile.fillType)
+                end
+            end
+        else
+            -- Moisture below threshold, clear accumulator if exists
+            if self.strawRotAccumulators[key] then
+                self.strawRotAccumulators[key] = nil
+            end
+        end
+    end
+end
+
+---
 -- Check if pile has content and remove tracking if empty
 -- @param gridX, gridZ: Grid coordinates
 -- @param fillType: The filltype to check
+-- @return boolean: true if pile still has content, false if empty/removed
 ---
 function GroundPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
     local moistureSystem = g_currentMission.MoistureSystem
@@ -796,6 +960,8 @@ function GroundPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
             storage = self.grassPiles
         elseif moistureSystem:isHayFillType(fillType) then
             storage = self.hayPiles
+        elseif moistureSystem:isStrawFillType(fillType) then
+            storage = self.strawPiles
         else
             storage = self.gridPiles
         end
@@ -803,7 +969,10 @@ function GroundPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
             storage[key] = nil
             -- print(string.format("[CLEANUP] Removed empty pile at (%d,%d)", gridX, gridZ))
         end
+        return false
     end
+
+    return true
 end
 
 ---
@@ -819,6 +988,8 @@ function GroundPropertyTracker:getPilePropertiesAtPosition(x, z, fillType)
         storage = self.grassPiles
     elseif moistureSystem:isHayFillType(fillType) then
         storage = self.hayPiles
+    elseif moistureSystem:isStrawFillType(fillType) then
+        storage = self.strawPiles
     else
         storage = self.gridPiles
     end
@@ -880,10 +1051,21 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
         })
     end
 
+    for key, pile in pairs(self.strawPiles) do
+        table.insert(oldPiles, {
+            gridX = pile.gridX,
+            gridZ = pile.gridZ,
+            fillType = pile.fillType,
+            properties = pile.properties,
+            isStraw = true
+        })
+    end
+
     -- Clear existing storage
     self.gridPiles = {}
     self.grassPiles = {}
     self.hayPiles = {}
+    self.strawPiles = {}
 
     -- Process each old pile
     for _, oldPile in ipairs(oldPiles) do
@@ -925,6 +1107,7 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
                             fillType = oldPile.fillType,
                             isGrass = oldPile.isGrass,
                             isHay = oldPile.isHay,
+                            isStraw = oldPile.isStraw,
                             contributions = {}
                         }
                     end
@@ -946,6 +1129,8 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
             storage = self.grassPiles
         elseif cell.isHay then
             storage = self.hayPiles
+        elseif cell.isStraw then
+            storage = self.strawPiles
         else
             storage = self.gridPiles
         end
@@ -1030,6 +1215,24 @@ function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
     i = 0
     for gridKey, pile in pairs(self.hayPiles) do
         local pileKey = string.format("%s.hayPiles.p(%d)", key, i)
+
+        setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
+        setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
+        setXMLInt(xmlFile, pileKey .. "#z", math.floor(pile.gridZ))
+
+        -- Save moisture with 3 decimal precision
+        if pile.properties.moisture then
+            local roundedMoisture = math.floor(pile.properties.moisture * 1000 + 0.5) / 1000
+            setXMLFloat(xmlFile, pileKey .. "#m", roundedMoisture)
+        end
+
+        i = i + 1
+    end
+
+    -- Save straw piles (optimized format)
+    i = 0
+    for gridKey, pile in pairs(self.strawPiles) do
+        local pileKey = string.format("%s.strawPiles.p(%d)", key, i)
 
         setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
         setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
@@ -1190,6 +1393,47 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
 
         local gridKey = self:getGridKey(gridX, gridZ, fillType)
         self.hayPiles[gridKey] = pile
+        loadedCount = loadedCount + 1
+
+        i = i + 1
+    end
+
+    -- Load straw piles (try new format first, fallback to legacy)
+    i = 0
+    loadedCount = 0
+    while true do
+        local pileKey = string.format("%s.strawPiles.p(%d)", key, i)
+        local fillType, gridX, gridZ, moisture
+
+        -- Try new optimized format
+        if hasXMLProperty(xmlFile, pileKey) then
+            fillType = getXMLInt(xmlFile, pileKey .. "#f")
+            gridX = getXMLInt(xmlFile, pileKey .. "#x")
+            gridZ = getXMLInt(xmlFile, pileKey .. "#z")
+            moisture = getXMLFloat(xmlFile, pileKey .. "#m")
+        else
+            -- Try legacy format for backward compatibility
+            local legacyKey = string.format("%s.strawPiles.pile(%d)", key, i)
+            fillType, gridX, gridZ, moisture = self:loadPileLegacyFormat(xmlFile, legacyKey)
+            if fillType == nil then
+                break
+            end
+        end
+
+        local pile = {
+            fillType = fillType,
+            fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType),
+            gridX = gridX,
+            gridZ = gridZ,
+            properties = {}
+        }
+
+        if moisture then
+            pile.properties.moisture = moisture
+        end
+
+        local gridKey = self:getGridKey(gridX, gridZ, fillType)
+        self.strawPiles[gridKey] = pile
         loadedCount = loadedCount + 1
 
         i = i + 1
