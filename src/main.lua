@@ -538,21 +538,21 @@ function MoistureSystem:getDefaultMoisture()
     return self.currentMoisturePercent
 end
 
-function MoistureSystem:loadGrassTypes()
-    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
-    for fromFillType, to in pairs(converter) do
-        local targetFillType = to.targetFillTypeIndex
-        if fromFillType == targetFillType then
-            continue
-        end
-    end
-end
+-- function MoistureSystem:loadGrassTypes()
+--     local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+--     for fromFillType, to in pairs(converter) do
+--         local targetFillType = to.targetFillTypeIndex
+--         if fromFillType == targetFillType then
+--             continue
+--         end
+--     end
+-- end
 
 function MoistureSystem:onStartMission()
     CropValueMap.initialize()
     local ms = g_currentMission.MoistureSystem
     ms:setHeights()
-    ms:loadGrassTypes()
+    -- ms:loadGrassTypes()
     ms.missionStarted = true
 
     if g_currentMission:getIsServer() then
