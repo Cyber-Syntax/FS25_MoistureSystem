@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>Ozz</author>
-    <version>0.0.0.4</version>
+    <version>0.0.0.5</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -20,6 +20,10 @@ Features include terrain-based moisture variation, grass tedding and drying mech
 Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Beta Changelog:
+
+0.0.0.5:
+- Grass on the ground over 15% moisture will rot away
+- Fix logic issue where grass pile moisture wasn't increasing in the rain
 
 0.0.0.4:
 - Fix game breaking deposting material into husbandries.

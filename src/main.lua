@@ -123,32 +123,31 @@ function MoistureSystem:updateMoistureLevel(delta)
         moistureDelta = (rainfall + (snowfall * 0.55) + (hailfall * 0.5)) * 0.009945 * scaledDelta *
             self.settings.moistureGainMultiplier
         self:adjustMoisture(moistureDelta)
-        return
-    end
-
-    -- Lose moisture from temperature (warmer = more loss)
-    -- Only lose during daytime (6am-8pm) or reduced loss at night
-    local daylightStart = 6
-    local daylightEnd = 20
-    local sunFactor = (currentHour >= daylightStart and currentHour < daylightEnd) and 1 or 0.33
-
-    local rateFactor = 0
-    if temperature >= 45 then
-        rateFactor = temperature * 0.001024
-    elseif temperature >= 35 then
-        rateFactor = temperature * 0.00075096
-    elseif temperature >= 25 then
-        rateFactor = temperature * 0.00032424
-    elseif temperature >= 15 then
-        rateFactor = temperature * 0.0001024
     else
-        rateFactor = temperature * 0.00004264
+        -- Lose moisture from temperature (warmer = more loss)
+        -- Only lose during daytime (6am-8pm) or reduced loss at night
+        local daylightStart = 6
+        local daylightEnd = 20
+        local sunFactor = (currentHour >= daylightStart and currentHour < daylightEnd) and 1 or 0.33
+
+        local rateFactor = 0
+        if temperature >= 45 then
+            rateFactor = temperature * 0.001024
+        elseif temperature >= 35 then
+            rateFactor = temperature * 0.00075096
+        elseif temperature >= 25 then
+            rateFactor = temperature * 0.00032424
+        elseif temperature >= 15 then
+            rateFactor = temperature * 0.0001024
+        else
+            rateFactor = temperature * 0.00004264
+        end
+
+        moistureDelta = moistureDelta - (rateFactor * scaledDelta * sunFactor * self.settings.moistureLossMultiplier)
+
+        -- Apply moisture change with clamping
+        self:adjustMoisture(moistureDelta)
     end
-
-    moistureDelta = moistureDelta - (rateFactor * scaledDelta * sunFactor * self.settings.moistureLossMultiplier)
-
-    -- Apply moisture change with clamping
-    self:adjustMoisture(moistureDelta)
 
     -- Update grass pile moisture
     if g_currentMission.groundPropertyTracker then

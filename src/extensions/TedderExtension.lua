@@ -61,7 +61,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     if farmland ~= nil then
         isContract = g_missionManager:getIsMissionRunningOnFarmland(farmland)
     end
-    
+
     -- Check for existing grass pile moisture at this location
     for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
         local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
@@ -122,7 +122,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
                 -- override default hay drop - convert back to appropriate grass type
                 local targetFillTypeName = g_fillTypeManager:getFillTypeNameByIndex(targetFillType)
                 local grassTypeName = nil
-                
+
                 -- Find the grass type that converts to this hay type
                 for grassType, hayType in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
                     if hayType == targetFillTypeName then
@@ -130,7 +130,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
                         break
                     end
                 end
-                
+
                 if grassTypeName then
                     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
                     dropArea.outputMoisture = positionMoisture

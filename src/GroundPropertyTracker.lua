@@ -8,6 +8,12 @@ GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for gras
 GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
 GroundPropertyTracker.DELAYED_PROCESSING_CYCLES = 2
 
+-- Grass rotting system constants
+GroundPropertyTracker.ROT_MOISTURE_THRESHOLD = 0.15 -- 15% moisture starts rotting
+GroundPropertyTracker.ROT_REMOVAL_THRESHOLD = 10.0  -- Remove 10 liters when threshold reached
+GroundPropertyTracker.ROT_ACCUMULATION_MIN = 0.1    -- Minimum liters per update cycle
+GroundPropertyTracker.ROT_ACCUMULATION_MAX = 0.3    -- Maximum liters per update cycle
+
 GroundPropertyTracker.GRASS_CONVERSION_MAP = {
     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
     ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
@@ -50,6 +56,10 @@ function GroundPropertyTracker.new()
     -- Key: "gridX_gridZ", Value: moisture value
     self.teddedGrassMoisture = {}
 
+    -- Track grass rotting accumulators
+    -- Key: "gridX_gridZ_fillType", Value: accumulated liters waiting for removal
+    self.grassRotAccumulators = {}
+
     return self
 end
 
@@ -88,6 +98,7 @@ end
 function GroundPropertyTracker:delete()
     self.gridPiles = {}
     self.grassPiles = {}
+    self.grassRotAccumulators = {}
 end
 
 ---
@@ -216,10 +227,6 @@ function GroundPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume,
                 if originalValue and totalVolume > 0 then
                     -- Volume-weighted average
                     newProperties[propKey] = (originalValue * existingVolume + propValue * volumeForCell) / totalVolume
-                    -- print(string.format(
-                    --     "[TRACKER] Grid (%d,%d) %s: Original=%.3f (%.1fL) + Incoming=%.3f (%.1fL) = Result=%.3f (%.1fL total)",
-                    --     cell.gridX, cell.gridZ, propKey, originalValue, existingVolume, propValue, volumeForCell,
-                    --     newProperties[propKey], totalVolume))
                 else
                     newProperties[propKey] = propValue
                 end
@@ -234,12 +241,6 @@ function GroundPropertyTracker:addPile(sx, sz, wx, wz, hx, hz, fillType, volume,
             g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
                 key, properties or {}, fillType, cell.gridX, cell.gridZ
             ))
-
-            for propKey, propValue in pairs(properties or {}) do
-                -- print(string.format("[TRACKER CREATE] Grid (%d,%d) %s: NEW PILE = %.3f (%.1fL from %.1fL drop)",
-                --     cell.gridX, cell.gridZ,
-                --     propKey, propValue, volumeForCell, volume))
-            end
         end
     end
 end
@@ -498,6 +499,67 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                 g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
                     key, pile.properties, pile.fillType, pile.gridX, pile.gridZ, true
                 ))
+            end
+        end
+    end
+
+    -- Process grass rotting (wet grass gradually decays)
+    for key, pile in pairs(self.grassPiles) do
+        if pile.properties.moisture and pile.properties.moisture > GroundPropertyTracker.ROT_MOISTURE_THRESHOLD then
+            -- Initialize accumulator if not exists
+            if not self.grassRotAccumulators[key] then
+                self.grassRotAccumulators[key] = 0
+            end
+
+            -- Add randomized accumulation amount
+            local randomAmount = GroundPropertyTracker.ROT_ACCUMULATION_MIN +
+                math.random() * (GroundPropertyTracker.ROT_ACCUMULATION_MAX - GroundPropertyTracker.ROT_ACCUMULATION_MIN)
+            self.grassRotAccumulators[key] = self.grassRotAccumulators[key] + randomAmount
+
+            -- Check if threshold reached
+            if self.grassRotAccumulators[key] >= GroundPropertyTracker.ROT_REMOVAL_THRESHOLD then
+                local removalAmount = GroundPropertyTracker.ROT_REMOVAL_THRESHOLD
+
+                -- Get cell center point for removal
+                local gridX = pile.gridX
+                local gridZ = pile.gridZ
+                local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
+
+                -- Calculate line coordinates for removal (use small radius around grid center)
+                local lsx, lsy, lsz = gridX - checkRadius,
+                    getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, gridX - checkRadius, 0,
+                        gridZ - checkRadius), gridZ - checkRadius
+                local lex, ley, lez = gridX + checkRadius,
+                    getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, gridX + checkRadius, 0,
+                        gridZ + checkRadius), gridZ + checkRadius
+                local lineRadius = checkRadius
+
+                -- Remove grass from density map (negative amount = pickup)
+                local removed = DensityMapHeightUtil.tipToGroundAroundLine(
+                    nil,            -- object (nil for no object)
+                    -removalAmount, -- negative = pickup
+                    pile.fillType,  -- grass fillType
+                    lsx, lsy, lsz,  -- start position
+                    lex, ley, lez,  -- end position
+                    lineRadius,     -- radius
+                    nil,            -- line offset
+                    nil,            -- last line offset
+                    false,          -- create piles
+                    nil             -- function callback
+                )
+
+                if removed ~= 0 then
+                    -- Reset accumulator after removal
+                    self.grassRotAccumulators[key] = 0
+
+                    -- Check if pile still has content, cleanup if empty
+                    self:checkPileHasContent(gridX, gridZ, pile.fillType)
+                end
+            end
+        else
+            -- Moisture below threshold, clear accumulator if exists
+            if self.grassRotAccumulators[key] then
+                self.grassRotAccumulators[key] = nil
             end
         end
     end
