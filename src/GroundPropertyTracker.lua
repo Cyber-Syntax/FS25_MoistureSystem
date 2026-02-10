@@ -4,6 +4,8 @@ local GroundPropertyTracker_mt = Class(GroundPropertyTracker)
 GroundPropertyTracker.GRID_SIZE = 2
 GroundPropertyTracker.MIN_GRASS_MOISTURE = 0.05 -- 5% minimum moisture for grass
 GroundPropertyTracker.MAX_GRASS_MOISTURE = 0.40 -- 40% maximum moisture for grass
+GroundPropertyTracker.MIN_HAY_MOISTURE = 0.04   -- 4% minimum moisture for hay
+GroundPropertyTracker.DRY_THRESHOLD = 0.07      -- 7% moisture converts grass to hay / hay to grass
 
 GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES = 10
 GroundPropertyTracker.DELAYED_PROCESSING_CYCLES = 2
@@ -33,6 +35,9 @@ function GroundPropertyTracker.new()
     -- Separate storage for grass piles
     self.grassPiles = {}
 
+    -- Separate storage for hay piles
+    self.hayPiles = {}
+
     -- Buffer for tedded grid cells (delays processing by 6 cycles)
     -- Value is number of update cycles remaining before moving to teddedGridCells
     self.teddedGridCellsBuffer = {}
@@ -51,6 +56,10 @@ function GroundPropertyTracker.new()
     -- Track cells that are designated as "hay cells" (recently converted to hay)
     -- Value is number of update cycles remaining
     self.hayCells = {}
+
+    -- Track cells that are designated as "grass cells" (recently converted back to grass from hay)
+    -- Value is number of update cycles remaining
+    self.grassCells = {}
 
     -- Track moisture of grass being moved by tedder
     -- Key: "gridX_gridZ", Value: moisture value
@@ -98,6 +107,7 @@ end
 function GroundPropertyTracker:delete()
     self.gridPiles = {}
     self.grassPiles = {}
+    self.hayPiles = {}
     self.grassRotAccumulators = {}
 end
 
@@ -252,7 +262,8 @@ end
 -- @return properties table or nil
 ---
 function GroundPropertyTracker:getPropertiesAtLocation(x, z, fillType)
-    local storage = g_currentMission.MoistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or self.gridPiles
+    local storage = g_currentMission.MoistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or
+    self.gridPiles
     local gridX, gridZ = self:getGridPosition(x, z)
     local key = self:getGridKey(gridX, gridZ, fillType)
     local pile = storage[key]
@@ -342,6 +353,13 @@ function GroundPropertyTracker:convertGrassToHayInCell(gridX, gridZ, grassFillTy
     )
 
     if grassVolume > 0 then
+        -- Get the moisture from the grass pile to transfer to hay
+        local grassKey = self:getGridKey(gridX, gridZ, grassFillType)
+        local grassMoisture = nil
+        if self.grassPiles[grassKey] and self.grassPiles[grassKey].properties.moisture then
+            grassMoisture = self.grassPiles[grassKey].properties.moisture
+        end
+
         -- Convert grass to hay with buffer
         local halfSize = GroundPropertyTracker.GRID_SIZE / 2
         local buffer = halfSize * 0.2
@@ -354,13 +372,85 @@ function GroundPropertyTracker:convertGrassToHayInCell(gridX, gridZ, grassFillTy
 
         DensityMapHeightUtil.changeFillTypeAtArea(sx, sz, wx, wz, hx, hz, grassFillType, hayFillType)
 
-        -- Clean up tracked grass pile in this cell
-        local key = self:getGridKey(gridX, gridZ, grassFillType)
-        if self.grassPiles[key] then
-            self.grassPiles[key] = nil
+        -- Create hay pile with grass's moisture
+        if grassMoisture then
+            local hayKey = self:getGridKey(gridX, gridZ, hayFillType)
+            self.hayPiles[hayKey] = {
+                gridX = gridX,
+                gridZ = gridZ,
+                fillType = hayFillType,
+                properties = {
+                    moisture = grassMoisture
+                }
+            }
+
+            -- Sync to clients
+            g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
+                hayKey, self.hayPiles[hayKey].properties, hayFillType, gridX, gridZ
+            ))
         end
 
-        -- Check for remaining content and cleanup
+        -- Check for remaining grass content and cleanup
+        self:checkPileHasContent(gridX, gridZ, grassFillType)
+    end
+end
+
+---
+-- Convert hay to grass in a specific cell if hay is present
+-- @param gridX, gridZ: Grid coordinates
+-- @param hayFillType: The hay fillType index
+-- @param grassFillType: The grass fillType index
+---
+function GroundPropertyTracker:convertHayToGrassInCell(gridX, gridZ, hayFillType, grassFillType)
+    local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
+
+    -- Check if there's hay in this cell
+    local hayVolume = DensityMapHeightUtil.getFillLevelAtArea(
+        hayFillType,
+        gridX - checkRadius, gridZ - checkRadius,
+        gridX + checkRadius, gridZ - checkRadius,
+        gridX - checkRadius, gridZ + checkRadius
+    )
+
+    if hayVolume > 0 then
+        -- Get the moisture from the hay pile to transfer to grass
+        local hayKey = self:getGridKey(gridX, gridZ, hayFillType)
+        local hayMoisture = nil
+        if self.hayPiles[hayKey] and self.hayPiles[hayKey].properties.moisture then
+            hayMoisture = self.hayPiles[hayKey].properties.moisture
+        end
+
+        -- Convert hay to grass with buffer
+        local halfSize = GroundPropertyTracker.GRID_SIZE / 2
+        local buffer = halfSize * 0.2
+        local sx = gridX - halfSize - buffer
+        local sz = gridZ - halfSize - buffer
+        local wx = gridX + halfSize + buffer
+        local wz = gridZ - halfSize - buffer
+        local hx = gridX - halfSize - buffer
+        local hz = gridZ + halfSize + buffer
+
+        DensityMapHeightUtil.changeFillTypeAtArea(sx, sz, wx, wz, hx, hz, hayFillType, grassFillType)
+
+        -- Create grass pile with hay's moisture
+        if hayMoisture then
+            local grassKey = self:getGridKey(gridX, gridZ, grassFillType)
+            self.grassPiles[grassKey] = {
+                gridX = gridX,
+                gridZ = gridZ,
+                fillType = grassFillType,
+                properties = {
+                    moisture = hayMoisture
+                }
+            }
+
+            -- Sync to clients
+            g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
+                grassKey, self.grassPiles[grassKey].properties, grassFillType, gridX, gridZ
+            ))
+        end
+
+        -- Check for remaining hay content and cleanup
         self:checkPileHasContent(gridX, gridZ, hayFillType)
     end
 end
@@ -476,8 +566,7 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                         }
 
                         g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
-                            key, self.grassPiles[key].properties, fromFillType, gridX, gridZ, true
-                        ))
+                            key, self.grassPiles[key].properties, fromFillType, gridX, gridZ))
 
                         -- Mark this cell as processed so we don't reduce it again in the second loop
                         processedThisCycle[gridKey] = true
@@ -508,9 +597,6 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                 local newMoisture = pile.properties.moisture + totalDelta
                 pile.properties.moisture = math.max(GroundPropertyTracker.MIN_GRASS_MOISTURE,
                     math.min(GroundPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
-                g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
-                    key, pile.properties, pile.fillType, pile.gridX, pile.gridZ, true
-                ))
 
                 -- Start cooldown for existing pile that was tedded
                 self.teddedGridCellsCooldown[gridKey] = GroundPropertyTracker.TEDDED_COOLDOWN_CYCLES
@@ -519,10 +605,18 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
                 local newMoisture = pile.properties.moisture + totalDelta
                 pile.properties.moisture = math.max(GroundPropertyTracker.MIN_GRASS_MOISTURE,
                     math.min(GroundPropertyTracker.MAX_GRASS_MOISTURE, newMoisture))
-                g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
-                    key, pile.properties, pile.fillType, pile.gridX, pile.gridZ, true
-                ))
             end
+
+            -- Check if grass should convert to hay (dry enough)
+            if pile.properties.moisture <= GroundPropertyTracker.DRY_THRESHOLD then
+                -- Mark cell for grass->hay conversion
+                self.hayCells[gridKey] = 10
+            end
+
+            -- Sync pile update to clients
+            g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
+                key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
+            ))
         end
     end
 
@@ -622,6 +716,65 @@ function GroundPropertyTracker:updateGrassMoisture(moistureDelta)
 end
 
 ---
+-- Update moisture levels for all hay piles
+-- @param moistureDelta: Amount to change moisture (can be positive or negative)
+---
+function GroundPropertyTracker:updateHayMoisture(moistureDelta)
+    if not self.isServer then return end
+    if moistureDelta == 0 then return end
+
+    local moistureSystem = g_currentMission.MoistureSystem
+    local checkRadius = GroundPropertyTracker.GRID_SIZE / 2
+
+    -- Update all hay piles with minimum clamping only
+    for key, pile in pairs(self.hayPiles) do
+        if pile.properties.moisture then
+            -- Apply natural moisture change
+            local newMoisture = pile.properties.moisture + moistureDelta
+            pile.properties.moisture = math.max(GroundPropertyTracker.MIN_HAY_MOISTURE, newMoisture)
+
+            local gridKey = self:getSimpleGridKey(pile.gridX, pile.gridZ)
+
+            -- Check if hay should convert back to grass (too wet)
+            if pile.properties.moisture > GroundPropertyTracker.DRY_THRESHOLD then
+                -- Mark cell for hay->grass conversion
+                self.grassCells[gridKey] = 10
+            end
+
+            -- Sync pile update to clients
+            g_client:getServerConnection():sendEvent(PilePropertyUpdateEvent.new(
+                key, pile.properties, pile.fillType, pile.gridX, pile.gridZ
+            ))
+        end
+    end
+
+    -- Process grass cells (hay->grass conversions)
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
+        end
+
+        for gridKey, _ in pairs(self.grassCells) do
+            local gridX, gridZ = gridKey:match("([^_]+)_([^_]+)")
+            gridX = tonumber(gridX)
+            gridZ = tonumber(gridZ)
+
+            self:convertHayToGrassInCell(gridX, gridZ, targetFillType, fromFillType)
+        end
+    end
+
+    -- Decrement grass cell counters
+    for gridKey, counter in pairs(self.grassCells) do
+        self.grassCells[gridKey] = counter - 1
+        if self.grassCells[gridKey] <= 0 then
+            self.grassCells[gridKey] = nil
+        end
+    end
+end
+
+---
 -- Check if pile has content and remove tracking if empty
 -- @param gridX, gridZ: Grid coordinates
 -- @param fillType: The filltype to check
@@ -638,7 +791,14 @@ function GroundPropertyTracker:checkPileHasContent(gridX, gridZ, fillType)
 
     if volume <= 0 then
         local key = self:getGridKey(gridX, gridZ, fillType)
-        local storage = moistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or self.gridPiles
+        local storage
+        if moistureSystem:isGrassOnGroundFillType(fillType) then
+            storage = self.grassPiles
+        elseif moistureSystem:isHayFillType(fillType) then
+            storage = self.hayPiles
+        else
+            storage = self.gridPiles
+        end
         if storage[key] then
             storage[key] = nil
             -- print(string.format("[CLEANUP] Removed empty pile at (%d,%d)", gridX, gridZ))
@@ -654,7 +814,15 @@ end
 ---
 function GroundPropertyTracker:getPilePropertiesAtPosition(x, z, fillType)
     local moistureSystem = g_currentMission.MoistureSystem
-    local storage = moistureSystem:isGrassOnGroundFillType(fillType) and self.grassPiles or self.gridPiles
+    local storage
+    if moistureSystem:isGrassOnGroundFillType(fillType) then
+        storage = self.grassPiles
+    elseif moistureSystem:isHayFillType(fillType) then
+        storage = self.hayPiles
+    else
+        storage = self.gridPiles
+    end
+
     local gridX, gridZ = self:getGridPosition(x, z)
     local key = self:getGridKey(gridX, gridZ, fillType)
     local pile = storage[key]
@@ -702,9 +870,20 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
         })
     end
 
+    for key, pile in pairs(self.hayPiles) do
+        table.insert(oldPiles, {
+            gridX = pile.gridX,
+            gridZ = pile.gridZ,
+            fillType = pile.fillType,
+            properties = pile.properties,
+            isHay = true
+        })
+    end
+
     -- Clear existing storage
     self.gridPiles = {}
     self.grassPiles = {}
+    self.hayPiles = {}
 
     -- Process each old pile
     for _, oldPile in ipairs(oldPiles) do
@@ -745,6 +924,7 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
                             gridZ = newGridZ,
                             fillType = oldPile.fillType,
                             isGrass = oldPile.isGrass,
+                            isHay = oldPile.isHay,
                             contributions = {}
                         }
                     end
@@ -761,7 +941,14 @@ function GroundPropertyTracker:convertGridCells(fromSize, toSize)
 
     -- Create final piles from accumulated contributions
     for key, cell in pairs(newCells) do
-        local storage = cell.isGrass and self.grassPiles or self.gridPiles
+        local storage
+        if cell.isGrass then
+            storage = self.grassPiles
+        elseif cell.isHay then
+            storage = self.hayPiles
+        else
+            storage = self.gridPiles
+        end
 
         storage[key] = {
             gridX = cell.gridX,
@@ -825,6 +1012,24 @@ function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
     i = 0
     for gridKey, pile in pairs(self.grassPiles) do
         local pileKey = string.format("%s.grassPiles.p(%d)", key, i)
+
+        setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
+        setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
+        setXMLInt(xmlFile, pileKey .. "#z", math.floor(pile.gridZ))
+
+        -- Save moisture with 3 decimal precision
+        if pile.properties.moisture then
+            local roundedMoisture = math.floor(pile.properties.moisture * 1000 + 0.5) / 1000
+            setXMLFloat(xmlFile, pileKey .. "#m", roundedMoisture)
+        end
+
+        i = i + 1
+    end
+
+    -- Save hay piles (optimized format)
+    i = 0
+    for gridKey, pile in pairs(self.hayPiles) do
+        local pileKey = string.format("%s.hayPiles.p(%d)", key, i)
 
         setXMLInt(xmlFile, pileKey .. "#f", pile.fillType)
         setXMLInt(xmlFile, pileKey .. "#x", math.floor(pile.gridX))
@@ -944,6 +1149,47 @@ function GroundPropertyTracker:loadFromXMLFile(xmlFile, key)
 
         local gridKey = self:getGridKey(gridX, gridZ, fillType)
         self.grassPiles[gridKey] = pile
+        loadedCount = loadedCount + 1
+
+        i = i + 1
+    end
+
+    -- Load hay piles (try new format first, fallback to legacy)
+    i = 0
+    loadedCount = 0
+    while true do
+        local pileKey = string.format("%s.hayPiles.p(%d)", key, i)
+        local fillType, gridX, gridZ, moisture
+
+        -- Try new optimized format
+        if hasXMLProperty(xmlFile, pileKey) then
+            fillType = getXMLInt(xmlFile, pileKey .. "#f")
+            gridX = getXMLInt(xmlFile, pileKey .. "#x")
+            gridZ = getXMLInt(xmlFile, pileKey .. "#z")
+            moisture = getXMLFloat(xmlFile, pileKey .. "#m")
+        else
+            -- Try legacy format for backward compatibility
+            local legacyKey = string.format("%s.hayPiles.pile(%d)", key, i)
+            fillType, gridX, gridZ, moisture = self:loadPileLegacyFormat(xmlFile, legacyKey)
+            if fillType == nil then
+                break
+            end
+        end
+
+        local pile = {
+            fillType = fillType,
+            fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType),
+            gridX = gridX,
+            gridZ = gridZ,
+            properties = {}
+        }
+
+        if moisture then
+            pile.properties.moisture = moisture
+        end
+
+        local gridKey = self:getGridKey(gridX, gridZ, fillType)
+        self.hayPiles[gridKey] = pile
         loadedCount = loadedCount + 1
 
         i = i + 1

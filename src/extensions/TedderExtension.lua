@@ -1,8 +1,5 @@
 MSTedderExtension = {}
 
--- Configuration
-MSTedderExtension.DRY_THRESHOLD = 0.07
-
 function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount)
     local tracker = g_currentMission.groundPropertyTracker
     if not g_currentMission.MoistureSystem:isGrassOnGroundFillType(fillType) then
