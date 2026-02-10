@@ -519,7 +519,7 @@ function MoistureSystem:isHayFillType(fillType)
 end
 
 ---
--- Check if fillType should be tracked (defined in CropValueMap)
+-- Check if fillType should be tracked (defined in CropValueMap or special types)
 -- @param fillType: The filltype index
 -- @return true if should be tracked
 ---
@@ -527,6 +527,12 @@ function MoistureSystem:shouldTrackFillType(fillType)
     if self:isGrassOnGroundFillType(fillType) then
         return true
     end
+    
+    -- Track straw
+    if fillType == FillType.STRAW then
+        return true
+    end
+    
     return CropValueMap.Data[fillType] ~= nil
 end
 

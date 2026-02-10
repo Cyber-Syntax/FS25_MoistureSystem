@@ -56,8 +56,60 @@ function MSCombineExtension:onFillUnitFillLevelChanged(superFunc, fillUnitIndex,
     end
 end
 
+---
+-- Extended to track dropped straw with moisture from current location
+-- @param superFunc: Original function
+-- @param workArea: Work area data
+-- @return litersToDrop, droppedLiters (always 1, 1 from original)
+---
+function MSCombineExtension:processCombineSwathArea(superFunc, workArea)
+    local spec = self.spec_combine
+
+    local droppedLitersBefore = spec and spec.workAreaParameters and spec.workAreaParameters.droppedLiters or 0
+
+    local result1, result2 = superFunc(self, workArea)
+
+    if g_currentMission.MoistureSystem.missionStarted and self.isServer and spec ~= nil then
+        local droppedLitersAfter = spec.workAreaParameters.droppedLiters or 0
+        local actualDropped = droppedLitersAfter - droppedLitersBefore
+
+        if actualDropped > 0 then
+            local moistureSystem = g_currentMission.MoistureSystem
+
+            local fruitDesc = g_fruitTypeManager:getFruitTypeByFillTypeIndex(spec.workAreaParameters.dropFillType)
+            if fruitDesc ~= nil and fruitDesc.windrowLiterPerSqm ~= nil then
+                local windrowFillType = g_fruitTypeManager:getWindrowFillTypeIndexByFruitTypeIndex(fruitDesc.index)
+
+                if windrowFillType == FillType.STRAW then
+                    local sx, sy, sz = getWorldTranslation(workArea.start)
+                    local wx, wy, wz = getWorldTranslation(workArea.width)
+                    local hx, hy, hz = getWorldTranslation(workArea.height)
+
+                    local centerX = (sx + wx + hx) / 3
+                    local centerZ = (sz + wz + hz) / 3
+                    local moisture = moistureSystem:getMoistureAtPosition(centerX, centerZ)
+
+                    g_currentMission.groundPropertyTracker:addPile(
+                        sx, sz, wx, wz, hx, hz,
+                        windrowFillType,
+                        actualDropped,
+                        { moisture = moisture }
+                    )
+                end
+            end
+        end
+    end
+
+    return result1, result2
+end
+
 -- Hook into Combine specialization
 Combine.onFillUnitFillLevelChanged = Utils.overwrittenFunction(
     Combine.onFillUnitFillLevelChanged,
     MSCombineExtension.onFillUnitFillLevelChanged
+)
+
+Combine.processCombineSwathArea = Utils.overwrittenFunction(
+    Combine.processCombineSwathArea,
+    MSCombineExtension.processCombineSwathArea
 )
