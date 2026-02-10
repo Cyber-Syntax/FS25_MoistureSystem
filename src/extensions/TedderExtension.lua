@@ -5,7 +5,7 @@ MSTedderExtension.DRY_THRESHOLD = 0.07
 
 function MSTedderExtension:processDropArea(superFunc, dropArea, fillType, amount)
     local tracker = g_currentMission.groundPropertyTracker
-    if not g_currentMission.MoistureSystem:isGrassFillType(fillType) then
+    if not g_currentMission.MoistureSystem:isGrassOnGroundFillType(fillType) then
         return superFunc(self, dropArea, fillType, amount)
     end
 
@@ -63,16 +63,29 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     end
 
     -- Check for existing grass pile moisture at this location
-    for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-        local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
-        if grassFillType then
-            local existingProps = tracker:getPropertiesAtLocation(centerX, centerZ, grassFillType)
-            if existingProps and existingProps.moisture then
-                positionMoisture = existingProps.moisture
-                break
-            end
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
+        end
+
+        local existingProps = tracker:getPropertiesAtLocation(centerX, centerZ, fromFillType)
+        if existingProps and existingProps.moisture then
+            positionMoisture = existingProps.moisture
+            break
         end
     end
+    -- for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
+    --     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
+    --     if grassFillType then
+    --         local existingProps = tracker:getPropertiesAtLocation(centerX, centerZ, grassFillType)
+    --         if existingProps and existingProps.moisture then
+    --             positionMoisture = existingProps.moisture
+    --             break
+    --         end
+    --     end
+    -- end
 
     local lsx, lsy, lsz, lex, ley, lez, lineRadius = DensityMapHeightUtil.getLineByAreaDimensions(sx, sy, sz, wx, wy, wz,
         hx, hy, hz, true)
@@ -101,12 +114,22 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
         if pickedUpLiters ~= 0 and g_currentMission.MoistureSystem:isHayFillType(targetFillType) then
             for _, cell in pairs(gridCells) do
                 -- Check all grass types for cleanup
-                for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-                    local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
-                    if grassFillType then
-                        tracker:checkPileHasContent(cell.gridX, cell.gridZ, grassFillType)
+                for fromFillType, to in pairs(converter) do
+                    local targetFillType = to.targetFillTypeIndex
+                    if fromFillType == targetFillType then
+                        continue
                     end
+
+                    tracker:checkPileHasContent(cell.gridX, cell.gridZ, fromFillType)
                 end
+
+
+                -- for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
+                --     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
+                --     if grassFillType then
+                --         tracker:checkPileHasContent(cell.gridX, cell.gridZ, grassFillType)
+                --     end
+                -- end
             end
         end
 
@@ -124,12 +147,23 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
                 local grassTypeName = nil
 
                 -- Find the grass type that converts to this hay type
-                for grassType, hayType in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-                    if hayType == targetFillTypeName then
-                        grassTypeName = grassType
+                for fromFillType, to in pairs(converter) do
+                    local targetFillType = to.targetFillTypeIndex
+                    if fromFillType == targetFillType then
+                        continue
+                    end
+
+                    if to.targetFillTypeIndex == targetFillType then
+                        grassTypeName = g_fillTypeManager:getFillTypeNameByIndex(fromFillType)
                         break
                     end
                 end
+                -- for grassType, hayType in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
+                --     if hayType == targetFillTypeName then
+                --         grassTypeName = grassType
+                --         break
+                --     end
+                -- end
 
                 if grassTypeName then
                     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)

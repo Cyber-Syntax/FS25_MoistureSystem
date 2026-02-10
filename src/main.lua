@@ -441,17 +441,44 @@ end
 -- @param fillType: The filltype index
 -- @return true if grass type
 ---
-function MoistureSystem:isGrassFillType(fillType)
-    local grasses = {
-        ["GRASS_WINDROW"] = true,
+function MoistureSystem:isGrassOnGroundFillType(fillType)
+    -- local grasses = {
+    --     ["GRASS_WINDROW"] = true,
+    --     ["GRASS"] = true,
+    --     ["ALFALFA_WINDROW"] = true,
+    --     ["ALFALFA"] = true,
+    --     ["CLOVER_WINDROW"] = true,
+    --     ["CLOVER"] = true
+    -- }
+    -- local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
+
+    -- if fillTypeName ~= "GRASS_WINDROW" and fillTypeName ~= "ALFALFA_WINDROW" and fillTypeName ~= "CLOVER_WINDROW" then
+    --     print("Checking if fillType is grass: " .. tostring(fillTypeName))
+    -- end
+    -- return grasses[fillTypeName] or false
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
+        end
+
+        if fillType == fromFillType then
+            return true
+        end
+    end
+
+    -- TODO REMOVE WHEN HAPPY THIS WORKS
+    local debugCheck = {
         ["GRASS"] = true,
-        ["ALFALFA_WINDROW"] = true,
         ["ALFALFA"] = true,
-        ["CLOVER_WINDROW"] = true,
         ["CLOVER"] = true
     }
-    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-    return grasses[fillTypeName] or false
+    if debugCheck[g_fillTypeManager:getFillTypeNameByIndex(fillType)] then
+        print("isGrassOnGroundFillType: WARNING: grass fillType is not accounted for: " ..
+        tostring(g_fillTypeManager:getFillTypeNameByIndex(fillType)))
+    end
+    return false
 end
 
 ---
@@ -460,18 +487,30 @@ end
 -- @return true if hay/dry type
 ---
 function MoistureSystem:isHayFillType(fillType)
-    local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-    if not fillTypeName then return false end
+    -- local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
+    -- if not fillTypeName then return false end
 
-    local GRASS_CONVERSION_MAP = {
-        ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
-        ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
-        ["CLOVER_WINDROW"] = "DRYCLOVER_WINDROW"
-    }
+    -- local GRASS_CONVERSION_MAP = {
+    --     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
+    --     ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
+    --     ["CLOVER_WINDROW"] = "DRYCLOVER_WINDROW"
+    -- }
 
-    -- Check if this fillType is one of the hay conversion targets
-    for _, hayType in pairs(GRASS_CONVERSION_MAP) do
-        if fillTypeName == hayType then
+    -- -- Check if this fillType is one of the hay conversion targets
+    -- for _, hayType in pairs(GRASS_CONVERSION_MAP) do
+    --     if fillTypeName == hayType then
+    --         return true
+    --     end
+    -- end
+    -- return false
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
+        end
+
+        if fillType == targetFillType then
             return true
         end
     end
@@ -484,7 +523,7 @@ end
 -- @return true if should be tracked
 ---
 function MoistureSystem:shouldTrackFillType(fillType)
-    if self:isGrassFillType(fillType) then
+    if self:isGrassOnGroundFillType(fillType) then
         return true
     end
     return CropValueMap.Data[fillType] ~= nil
@@ -499,10 +538,21 @@ function MoistureSystem:getDefaultMoisture()
     return self.currentMoisturePercent
 end
 
+function MoistureSystem:loadGrassTypes()
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
+        end
+    end
+end
+
 function MoistureSystem:onStartMission()
     CropValueMap.initialize()
     local ms = g_currentMission.MoistureSystem
     ms:setHeights()
+    ms:loadGrassTypes()
     ms.missionStarted = true
 
     if g_currentMission:getIsServer() then

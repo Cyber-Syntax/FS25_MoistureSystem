@@ -58,12 +58,12 @@ function PilePropertyUpdateEvent:run(connection)
     end
 
     local tracker = g_currentMission.groundPropertyTracker
-    local isGrass = g_currentMission.MoistureSystem:isGrassFillType(self.fillTypeIndex)
+    local isGrass = g_currentMission.MoistureSystem:isGrassOnGroundFillType(self.fillTypeIndex)
     if isGrass and self.allowConversion and self.properties.moisture and self.properties.moisture <= MSTedderExtension.DRY_THRESHOLD then
         if g_currentMission:getIsServer() then
             -- Calculate area from grid position with 20% buffer to catch grass at edges
             local halfSize = GroundPropertyTracker.GRID_SIZE / 2
-            local buffer = halfSize * 0.2  -- 20% buffer
+            local buffer = halfSize * 0.2 -- 20% buffer
             local sx = self.gridX - halfSize - buffer
             local sz = self.gridZ - halfSize - buffer
             local wx = self.gridX + halfSize + buffer
@@ -72,20 +72,34 @@ function PilePropertyUpdateEvent:run(connection)
             local hz = self.gridZ + halfSize + buffer
 
             -- Get the appropriate hay type for this grass type
-            local grassFillTypeName = g_fillTypeManager:getFillTypeNameByIndex(self.fillTypeIndex)
-            local hayFillTypeName = GroundPropertyTracker.GRASS_CONVERSION_MAP[grassFillTypeName]
-            local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayFillTypeName)
-            
+            -- local grassFillTypeName = g_fillTypeManager:getFillTypeNameByIndex(self.fillTypeIndex)
+            -- local hayFillTypeName = GroundPropertyTracker.GRASS_CONVERSION_MAP[grassFillTypeName]
+            -- local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayFillTypeName)
+
+            local hayFillType
+            local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+            for fromFillType, to in pairs(converter) do
+                local targetFillType = to.targetFillTypeIndex
+                if fromFillType == targetFillType then
+                    continue
+                end
+
+                if fromFillType == self.fillTypeIndex then
+                    hayFillType = targetFillType
+                    break
+                end
+            end
+
             if hayFillType then
                 -- print(string.format("[HAY CONVERSION] Cell (%d,%d) moisture %.1f%% <= %.1f%% threshold - converting %s to %s (with 20%% buffer)",
                 --     self.gridX, self.gridZ, self.properties.moisture * 100, MSTedderExtension.DRY_THRESHOLD * 100, grassFillTypeName, hayFillTypeName))
                 DensityMapHeightUtil.changeFillTypeAtArea(sx, sz, wx, wz, hx, hz, self.fillTypeIndex, hayFillType)
             end
-            
+
             -- Mark this cell as a "hay cell" for 5 seconds (10 cycles at 500ms each)
             local gridKey = tracker:getSimpleGridKey(self.gridX, self.gridZ)
             tracker.hayCells[gridKey] = 10
-            
+
             -- Check and cleanup any remaining grass pile tracking
             -- tracker:checkPileHasContent(self.gridX, self.gridZ, hayFillType) -- I think not needed, we don't track hay
             tracker:checkPileHasContent(self.gridX, self.gridZ, self.fillTypeIndex)

@@ -278,25 +278,42 @@ function BaleRottingSystem:isBaleRottable(item)
         return false
     end
     
-    -- Build rottable fillTypes dynamically from GRASS_CONVERSION_MAP
     local rottableFillTypes = {
         [FillType.SILAGE] = true,
     }
-    
-    -- Add all grass types (keys) and hay types (values) from conversion map
-    for grassTypeName, hayTypeName in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-        local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
-        local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayTypeName)
-        
-        if grassFillType then
-            rottableFillTypes[grassFillType] = true
+
+    if rottableFillTypes[item.fillType] then
+        return true
+    end
+
+    local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+    for fromFillType, to in pairs(converter) do
+        local targetFillType = to.targetFillTypeIndex
+        if fromFillType == targetFillType then
+            continue
         end
-        if hayFillType then
-            rottableFillTypes[hayFillType] = true
+
+        if item.fillType == targetFillType or item.fillType == fromFillType then
+            return true
         end
     end
+
+    return false
     
-    return rottableFillTypes[item.fillType] or false
+    -- -- Add all grass types (keys) and hay types (values) from conversion map
+    -- for grassTypeName, hayTypeName in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
+    --     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
+    --     local hayFillType = g_fillTypeManager:getFillTypeIndexByName(hayTypeName)
+        
+    --     if grassFillType then
+    --         rottableFillTypes[grassFillType] = true
+    --     end
+    --     if hayFillType then
+    --         rottableFillTypes[hayFillType] = true
+    --     end
+    -- end
+    
+    -- return rottableFillTypes[item.fillType] or false
 end
 
 ---

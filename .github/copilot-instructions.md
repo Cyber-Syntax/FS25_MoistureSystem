@@ -18,12 +18,13 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Dynamic moisture changes based on rainfall, snowfall, temperature, and time of day
 - Reduced loss at night (6am-8pm = day, night = 33% loss rate)
 - **FillType Checking Methods**:
-  - `isGrassFillType(fillType)` - Check if fillType is grass/alfalfa/clover (windrow or regular)
-  - `isHayFillType(fillType)` - Check if fillType is converted hay/dry grass
+  - `isGrassOnGroundFillType(fillType)` - Check if fillType is grass/alfalfa/clover using TEDDER converter data
+  - `isHayFillType(fillType)` - Check if fillType is converted hay/dry grass (target of TEDDER conversion)
   - `shouldTrackFillType(fillType)` - Check if fillType should be tracked (grass or in CropValueMap)
+  - Uses `g_fillTypeManager:getConverterDataByName("TEDDER")` to dynamically detect grass types
 
 ### Moisture Settings & Clamp System
-- **Location**: `src/MoistureSettings.lua` and `src/MoistureClamp.lua`
+- **Location**: `src/MoistureSettings.lua` and `src/data/MoistureClamp.lua`
 - **Global Access**: `g_currentMission.MoistureSystem.settings`
 - Provides in-game settings menu for environment type (DRY/NORMAL/WET)
 - MoistureClamp defines monthly moisture ranges (0-100 scale) for each environment
@@ -31,11 +32,26 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Server-only setting with permission-based access control
 - Persists in save game XML
 
-### Harvest Property Tracker
+### Bale Rotting System
+- **Location**: `src/BaleRottingSystem.lua`
+- **Global Access**: `g_currentMission.baleRottingSystem`
+- Tracks bale exposure to rain with grace period and gradual decay
+- Three rot rate tiers based on peak exposure time:
+  - Slow rot: After 20 minutes exposure
+  - Normal rot: After 40 minutes exposure
+  - Fast rot: After 60 minutes exposure
+- Bales can dry if exposure < slow rot threshold (20 minutes)
+- Once rotting starts, bales cannot dry back
+- Exposure time decrements slowly when dry (decay rate: 0.375)
+- Sunshine provides drying bonus (1.0-1.25x multiplier)
+- Bale status tracked: GETTING_WET, DRYING, ROTTING_SLOWLY, ROTTING, ROTTING_QUICKLY
+- Persists exposure and peak exposure in save game
+
+### Ground Property Tracker
 - **Location**: `src/GroundPropertyTracker.lua`
 - **Global Access**: `g_currentMission.groundPropertyTracker`
 - Tracks custom properties (moisture) on dropped filltype piles
-- Uses grid-based storage (5m cells) with `"gridX_gridZ_fillType"` keys
+- Uses grid-based storage (2m cells) with `"gridX_gridZ_fillType"` keys
 - Separate storage for grass piles (`grassPiles`) vs other crops (`gridPiles`)
 - Distributes volume proportionally across grid cells based on bounding box overlap
 - Automatically merges piles in same grid cell using volume-weighted averaging
@@ -44,6 +60,12 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Special handling for tedded grass with cooldown system (10 cycles = 5 seconds)
 - Automatic hay conversion when grass moisture ≤ 7% (`DRY_THRESHOLD`)
 - `hayCells` tracking prevents grass from re-appearing in recently converted cells
+- **Grass Rotting System**: Wet grass (>15% moisture) gradually decays using accumulator system
+  - Tracks rot accumulators per pile (`grassRotAccumulators`)
+  - Random accumulation (0.1-0.3 liters per cycle) when moisture > 15%
+  - Removes 10 liters when accumulator threshold reached
+  - Uses `DensityMapHeightUtil.tipToGroundAroundLine` with negative amount for removal
+  - Automatically cleans up empty piles via `checkPileHasContent`
 
 ## FS25 Modding Patterns
 
@@ -516,14 +538,16 @@ end
 - Moisture ranges defined per crop (e.g., wheat optimal: 11-13%, barley: 12-14%)
 
 ### Grass Drying & Hay Conversion
-- **Location**: `src/extensions/TedderExtension.lua`
-- Tedding picks up grass, reduces moisture by 5% per pass, drops it back
+- **Location**: `src/extensions/TedderExtension.lua` and `src/GroundPropertyTracker.lua`
+- Tedding picks up grass, reduces moisture by configurable amount per pass, drops it back
 - Grass moisture updated dynamically in `updateGrassMoisture()` based on weather
 - When grass reaches ≤7% moisture (`DRY_THRESHOLD`), automatically converts to hay
+- Uses dynamic converter system via `g_fillTypeManager:getConverterDataByName("TEDDER")`
 - Conversion uses `DensityMapHeightUtil.changeFillTypeAtArea(sx, sz, wx, wz, hx, hz, grassType, hayType)`
 - Converted cells marked as "hay cells" for 5 seconds to prevent grass re-appearing
 - Cooldown system prevents tedded cells from being marked again for 5 seconds
-- Moisture stored per-grid-cell, tracked separately in `grassPiles` storage
+- Moisture stored per-grid-cell (2m), tracked separately in `grassPiles` storage
+- **Note**: Legacy `GRASS_CONVERSION_MAP` has been replaced with dynamic converter lookup
 
 ### Update Cycle Pattern
 - Main system updates every 500ms (`updateInterval`)
@@ -544,7 +568,7 @@ end
 
 ## Performance Considerations
 
-1. **Grid size selection** - 5m grid balances accuracy vs memory (smaller = more cells, more memory)
+1. **Grid size selection** - 2m grid balances accuracy vs memory (smaller = more cells, more memory)
 2. **Update intervals** - 500ms update interval prevents excessive calculations
 3. **Volume-weighted averaging** - Always query actual density map volume for accurate weighting
 4. **Cleanup tracking** - Remove empty piles from tracking immediately after pickup/conversion
@@ -559,13 +583,17 @@ end
 13. **Extension self reference** - Extensions add `self` as first param after `superFunc`, not before
 14. **Cooldown counters** - Decrement counters in update loop, remove when ≤ 0, not == 0
 15. **Cache invalidation** - Clear moisture cache when currentMoisturePercent changes or month transitions occur
+16. **Grass rotting randomization** - Random accumulation prevents uniform removal across map
+17. **Dynamic converter lookup** - Use `g_fillTypeManager:getConverterDataByName()` instead of hardcoded maps for future-proof fillType detection
 
-## Volume-Weighted Averaging Pattern
+## Common Patterns
+
+### Volume-Weighted Averaging Pattern
 
 Always use actual density map volume for accurate weighted averaging:
 ```lua
 -- Get actual volume from density map
-local checkRadius = GRID_SIZE / 2
+local checkRadius = GroundPropertyTracker.GRID_SIZE / 2  -- 2m grid = 1m radius
 local existingVolume = DensityMapHeightUtil.getFillLevelAtArea(
     fillType,
     gridX - checkRadius, gridZ - checkRadius,
@@ -578,6 +606,56 @@ local totalVolume = existingVolume + incomingVolume
 -- Volume-weighted average
 if totalVolume > 0 then
     newValue = (existingValue * existingVolume + incomingValue * incomingVolume) / totalVolume
+end
+```
+
+### Grass Rotting Pattern
+
+Gradual grass decay when wet using accumulator system:
+```lua
+-- Check moisture threshold and accumulate rot
+if pile.properties.moisture > GroundPropertyTracker.ROT_MOISTURE_THRESHOLD then
+    if not self.grassRotAccumulators[key] then
+        self.grassRotAccumulators[key] = 0
+    end
+    
+    -- Add randomized amount (prevents uniform removal)
+    local randomAmount = GroundPropertyTracker.ROT_ACCUMULATION_MIN + 
+        math.random() * (GroundPropertyTracker.ROT_ACCUMULATION_MAX - GroundPropertyTracker.ROT_ACCUMULATION_MIN)
+    self.grassRotAccumulators[key] = self.grassRotAccumulators[key] + randomAmount
+    
+    -- Remove grass when threshold reached
+    if self.grassRotAccumulators[key] >= GroundPropertyTracker.ROT_REMOVAL_THRESHOLD then
+        -- Use tipToGroundAroundLine with negative amount
+        local removed = DensityMapHeightUtil.tipToGroundAroundLine(
+            nil, -amount, fillType, lsx, lsy, lsz, lex, ley, lez, radius, nil, nil, false, nil
+        )
+        if removed ~= 0 then
+            self.grassRotAccumulators[key] = 0
+            self:checkPileHasContent(gridX, gridZ, fillType)
+        end
+    end
+else
+    -- Clear accumulator when dry
+    self.grassRotAccumulators[key] = nil
+end
+```
+
+### Dynamic Grass Type Detection Pattern
+
+Use converter data instead of hardcoded fillType maps:
+```lua
+-- Get all grass types that can be tedded
+local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
+for fromFillType, to in pairs(converter) do
+    local targetFillType = to.targetFillTypeIndex
+    if fromFillType == targetFillType then
+        continue  -- Skip non-converting entries
+    end
+    
+    -- fromFillType is grass windrow (e.g., GRASS_WINDROW)
+    -- targetFillType is hay/dry grass (e.g., DRYGRASS_WINDROW)
+    -- Process grass types here
 end
 ```
 
