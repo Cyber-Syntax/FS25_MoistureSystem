@@ -303,6 +303,7 @@ function BaleRottingSystem:isBaleRottable(item)
 
     local rottableFillTypes = {
         [FillType.SILAGE] = true,
+        [FillType.STRAW] = true
     }
 
     if rottableFillTypes[item.fillType] then
