@@ -324,6 +324,28 @@ function BaleRottingSystem:isBaleRottable(item)
 end
 
 ---
+-- Remove bale from tracking if it's not in a rotting state
+-- Used when bale is wrapped and shouldn't get wetter
+-- @param uniqueId: Bale unique ID
+-- @return boolean: true if bale was removed, false if it's rotting and wasn't removed
+---
+function BaleRottingSystem:removeBaleIfNotRotting(uniqueId)
+    if not self.isServer then return false end
+    
+    local baleData = self.baleRainExposureTimes[uniqueId]
+    if not baleData then
+        return true
+    end
+    
+    if baleData.status < self.BALE_STATUS.ROTTING_SLOWLY then
+        self.baleRainExposureTimes[uniqueId] = nil
+        return true
+    end
+    
+    return false
+end
+
+---
 -- Clean up tracking when bale is deleted
 -- @param bale: Bale being deleted
 ---

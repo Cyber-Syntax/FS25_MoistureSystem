@@ -283,9 +283,6 @@ function MSPlayerHUDExtension:showVehicleInfo(vehicle)
         return
     end
 
-    if self.objectMoistureBox ~= nil then
-        g_currentMission.hud.infoDisplay:destroyBox(self.objectMoistureBox)
-    end
     -- Add moisture data for each fillType stored in this object
     for fillTypeName, moisture in pairs(objectData) do
         local fillTypeIndex = g_fillTypeManager:getFillTypeIndexByName(fillTypeName)

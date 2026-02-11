@@ -85,6 +85,29 @@ function MSBaleExtension:delete(superFunc)
     superFunc(self)
 end
 
+---
+-- Extended to stop tracking bale exposure when wrapped (if not rotting)
+-- Once wrapped, bale won't get wetter, so remove from rotting system if not already rotting
+-- @param superFunc: Original function
+-- @param wrappingState: Wrapping progress (0-1, >= 1 means fully wrapped)
+-- @param updateFermentation: Whether to update fermentation state
+---
+function MSBaleExtension:setWrappingState(superFunc, wrappingState, updateFermentation)
+    superFunc(self, wrappingState, updateFermentation)
+    
+    if not self.isServer then
+        return
+    end
+    
+    -- When bale becomes wrapped (wrappingState >= 1), remove from rotting tracking if not rotting
+    if wrappingState >= 1 then
+        local baleRottingSystem = g_currentMission.baleRottingSystem
+        if baleRottingSystem and self.uniqueId then
+            baleRottingSystem:removeBaleIfNotRotting(self.uniqueId)
+        end
+    end
+end
+
 Bale.onFermentationEnd = Utils.overwrittenFunction(
     Bale.onFermentationEnd,
     MSBaleExtension.onFermentationEnd
@@ -93,4 +116,9 @@ Bale.onFermentationEnd = Utils.overwrittenFunction(
 Bale.delete = Utils.overwrittenFunction(
     Bale.delete,
     MSBaleExtension.delete
+)
+
+Bale.setWrappingState = Utils.overwrittenFunction(
+    Bale.setWrappingState,
+    MSBaleExtension.setWrappingState
 )
