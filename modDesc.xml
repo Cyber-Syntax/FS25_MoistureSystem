@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>Ozz</author>
-    <version>0.0.0.5</version>
+    <version>0.0.0.6</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -21,9 +21,9 @@ Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Beta Changelog:
 
-0.0.0.6 [WIP]:
+0.0.0.6:
 - Wrapped grass bales will track moisture % on the bale. When the bale is done fermenting, volume will be reduced based on moisture thresholds.
-- Straw that is baled will track moisture on the baler (you can see this in the info hud). The output bale will have rain exposure % applied if over certain thresholds.
+- Straw that is baled will track moisture on the baler. The output bale will have rain exposure % applied if over certain thresholds.
 - Hay will revert to grass if moisture goes about he 7% threshold.
 - Include straw bales in the bale rotting system.
 - Add missing setting strings.
