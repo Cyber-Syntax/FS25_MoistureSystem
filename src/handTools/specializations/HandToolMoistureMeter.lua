@@ -187,7 +187,8 @@ function HandToolMoistureMeter:performMeasurement()
     local x, y, z = getWorldTranslation(player.rootNode)
     local moisture = g_currentMission.MoistureSystem:getMoistureAtPosition(x, z)
 
-    g_currentMission:showBlinkingWarning(string.format("[MoistureSystem] Field Moisture: %.2f%%", moisture * 100), 3000)
+    local message = string.format(g_i18n:getText("moistureSystem_groundMoistureReading"), moisture * 100)
+    g_currentMission:showBlinkingWarning(message, 3000)
 end
 
 ---Draw UI overlay

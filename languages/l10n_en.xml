@@ -66,5 +66,6 @@
 		<text name="moistureSystem_moistureMeter" text="Moisture Meter"/>
 		<text name="moistureSystem_moistureMeterFunction" text="Measure field moisture levels"/>
 		<text name="moistureSystem_measureLocation" text="Measure Moisture"/>
+		<text name="moistureSystem_groundMoistureReading" text="Ground Moisture: %.2f%%"/>
 	</texts>
 </l10n>

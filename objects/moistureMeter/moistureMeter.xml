@@ -6,7 +6,7 @@
 			<function>$l10n_moistureSystem_moistureMeterFunction</function>
 		</functions>
 		<image>store_moistureMeter.dds</image>
-		<price>50</price>
+		<price>500</price>
 		<lifetime>1000</lifetime>
 		<dailyUpkeep>0</dailyUpkeep>
 		<rotation>0</rotation>
