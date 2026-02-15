@@ -46,24 +46,24 @@ end
 function HandToolMoistureMeter:onPostLoad(savegame)
     local spec = self[specName]
 
-    -- if self.isClient then
-    --     -- spec.defaultCrosshair = self:createCrosshairOverlay("gui.crosshairDefault")
+    if self.isClient then
+        -- spec.defaultCrosshair = self:createCrosshairOverlay("gui.crosshairDefault")
 
-    --     -- Load sounds
-    --     spec.samples = {}
-    --     spec.samples.start = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds", "start",
-    --         self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
-    --     spec.samples.cancel = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds", "cancel",
-    --         self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
-    --     spec.samples.complete = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds",
-    --         "complete", self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
-    -- end
+        -- Load sounds
+        spec.samples = {}
+        spec.samples.start = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds", "start",
+            self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
+        spec.samples.cancel = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds", "cancel",
+            self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
+        spec.samples.complete = g_soundManager:loadSampleFromXML(self.xmlFile, "handTool.moistureMeter.sounds",
+            "complete", self.baseDirectory, self.components, 1, AudioGroup.VEHICLE, self.i3dMappings, self)
+    end
 
-    -- spec.activateText = g_i18n:getText("moistureSystem_measureLocation")
-    -- spec.isActive = false
-    -- spec.isHolding = false
-    -- spec.holdStartTime = 0
-    -- spec.holdDuration = 4000 -- 4 seconds in milliseconds
+    spec.activateText = g_i18n:getText("moistureSystem_measureLocation")
+    spec.isActive = false
+    spec.isHolding = false
+    spec.holdStartTime = 0
+    spec.holdDuration = 4000 -- 4 seconds in milliseconds
 
     print("[MoistureSystem] Moisture meter initialized")
 end
@@ -77,9 +77,9 @@ function HandToolMoistureMeter:onDelete()
     --     spec.defaultCrosshair = nil
     -- end
 
-    -- if spec.samples ~= nil then
-    --     g_soundManager:deleteSamples(spec.samples)
-    -- end
+    if spec.samples ~= nil then
+        g_soundManager:deleteSamples(spec.samples)
+    end
 end
 
 ---Called when player picks up the tool
