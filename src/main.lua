@@ -23,13 +23,10 @@ function MoistureSystem:loadMap()
         baleExposureDecayRate = 1.0
     }
 
-    -- Initialize property tracker
     g_currentMission.groundPropertyTracker = GroundPropertyTracker.new()
 
-    -- Initialize bale rotting system
     g_currentMission.baleRottingSystem = BaleRottingSystem.new()
 
-    -- Initialize vehicle/object moisture tracking
     self.objectMoisture = {}
 
     -- Initialize LRU cache for getMoistureAtPosition
@@ -37,10 +34,8 @@ function MoistureSystem:loadMap()
     self.moistureCacheOrder = {}
     self.moistureCacheMaxSize = 10
 
-    -- Load from XML file (called directly during loadMap, not via hook)
     self:loadFromXMLFile()
 
-    -- Inject menu after GUI is ready
     if g_gui then
         MoistureSettings.addSettingsToMenu()
     end
@@ -49,11 +44,9 @@ function MoistureSystem:loadMap()
 
     if g_addCheatCommands and g_currentMission:getIsServer() then
         addConsoleCommand("msSetMoisture", "Set Moisture", "consoleCommandSetMoisture", self)
-        addConsoleCommand("msSpawnMeter", "Spawn Moisture Meter", "consoleCommandSpawnMeter", self)
     end
 end
 
--- Local values: height
 function MoistureSystem:consoleCommandSetMoisture(newMoisture)
     if not g_currentMission:getIsServer() then return end
     local newMoistureNum = tonumber(newMoisture)
@@ -65,34 +58,9 @@ function MoistureSystem:consoleCommandSetMoisture(newMoisture)
     return string.format("New moisture is %.3f", newMoistureNum)
 end
 
-function MoistureSystem:consoleCommandSpawnMeter()
-    if not g_currentMission:getIsServer() then return "Server only command" end
-    
-    local xmlFilename = MoistureSystem.dir .. "objects/moistureMeter/moistureMeter.xml"
-    local typeName = g_currentModName .. ".moistureMeter"
-    local handToolType = g_handToolTypeManager:getTypeByName(typeName)
-    
-    if handToolType == nil then
-        return string.format("Hand tool type not found: %s", typeName)
-    end
-    
-    local handTool = _G[handToolType.className].new(g_currentMission:getIsServer(), g_currentMission:getIsClient())
-    handTool:setType(handToolType)
-    
-    -- Load the hand tool
-    if handTool:load(xmlFilename) then
-        g_currentMission.handToolSystem:addHandTool(handTool)
-        print("[MoistureSystem] Moisture meter spawned successfully")
-        return "Moisture meter spawned"
-    else
-        return "Failed to spawn moisture meter"
-    end
-end
-
 function MoistureSystem:delete()
     if g_addCheatCommands then
         removeConsoleCommand("msSetMoisture")
-        removeConsoleCommand("msSpawnMeter")
     end
 end
 
@@ -144,7 +112,6 @@ function MoistureSystem:updateMoistureLevel(delta)
     -- Calculate moisture delta
     local moistureDelta = 0
 
-    -- Gain moisture from rain/snow/hail
     if rainfall > 0 or snowfall > 0 or hailfall > 0 then
         moistureDelta = (rainfall + (snowfall * 0.55) + (hailfall * 0.5)) * 0.009945 * scaledDelta *
             self.settings.moistureGainMultiplier
@@ -171,11 +138,9 @@ function MoistureSystem:updateMoistureLevel(delta)
 
         moistureDelta = moistureDelta - (rateFactor * scaledDelta * sunFactor * self.settings.moistureLossMultiplier)
 
-        -- Apply moisture change with clamping
         self:adjustMoisture(moistureDelta)
     end
 
-    -- Update grass pile moisture
     if g_currentMission.groundPropertyTracker then
         g_currentMission.groundPropertyTracker:updateGrassMoisture(moistureDelta, delta)
         g_currentMission.groundPropertyTracker:updateHayMoisture(moistureDelta)
@@ -189,7 +154,6 @@ end
 ---
 function MoistureSystem:adjustMoisture(delta)
     if not g_currentMission:getIsServer() then return end
-    -- Get current month and environment
     local month = MoistureSystem.periodToMonth(g_currentMission.environment.currentPeriod)
     local environment = self.settings.environment
 
@@ -269,11 +233,9 @@ function MoistureSystem:getMoistureAtPosition(x, z)
 end
 
 function MoistureSystem:firstLoad()
-    -- Get current month and environment
     local month = MoistureSystem.periodToMonth(g_currentMission.environment.currentPeriod)
     local environment = self.settings.environment
 
-    -- Get min/max for current month and environment
     local monthData = MoistureClamp.Environments[environment].Months[month]
     local minMoisture = monthData.Min
     local maxMoisture = monthData.Max
@@ -362,7 +324,6 @@ function MoistureSystem:hasFillType(uniqueId, fillType)
         return false
     end
 
-    -- Get the object from the mission
     local object = g_currentMission:getObjectByUniqueId(uniqueId)
     if object == nil then
         return false
@@ -470,20 +431,6 @@ end
 -- @return true if grass type
 ---
 function MoistureSystem:isGrassOnGroundFillType(fillType)
-    -- local grasses = {
-    --     ["GRASS_WINDROW"] = true,
-    --     ["GRASS"] = true,
-    --     ["ALFALFA_WINDROW"] = true,
-    --     ["ALFALFA"] = true,
-    --     ["CLOVER_WINDROW"] = true,
-    --     ["CLOVER"] = true
-    -- }
-    -- local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-
-    -- if fillTypeName ~= "GRASS_WINDROW" and fillTypeName ~= "ALFALFA_WINDROW" and fillTypeName ~= "CLOVER_WINDROW" then
-    --     print("Checking if fillType is grass: " .. tostring(fillTypeName))
-    -- end
-    -- return grasses[fillTypeName] or false
     local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
     for fromFillType, to in pairs(converter) do
         local targetFillType = to.targetFillTypeIndex
@@ -495,17 +442,6 @@ function MoistureSystem:isGrassOnGroundFillType(fillType)
             return true
         end
     end
-
-    -- TODO REMOVE WHEN HAPPY THIS WORKS
-    local debugCheck = {
-        ["GRASS"] = true,
-        ["ALFALFA"] = true,
-        ["CLOVER"] = true
-    }
-    if debugCheck[g_fillTypeManager:getFillTypeNameByIndex(fillType)] then
-        print("isGrassOnGroundFillType: WARNING: grass fillType is not accounted for: " ..
-        tostring(g_fillTypeManager:getFillTypeNameByIndex(fillType)))
-    end
     return false
 end
 
@@ -515,22 +451,6 @@ end
 -- @return true if hay/dry type
 ---
 function MoistureSystem:isHayFillType(fillType)
-    -- local fillTypeName = g_fillTypeManager:getFillTypeNameByIndex(fillType)
-    -- if not fillTypeName then return false end
-
-    -- local GRASS_CONVERSION_MAP = {
-    --     ["GRASS_WINDROW"] = "DRYGRASS_WINDROW",
-    --     ["ALFALFA_WINDROW"] = "DRYALFALFA_WINDROW",
-    --     ["CLOVER_WINDROW"] = "DRYCLOVER_WINDROW"
-    -- }
-
-    -- -- Check if this fillType is one of the hay conversion targets
-    -- for _, hayType in pairs(GRASS_CONVERSION_MAP) do
-    --     if fillTypeName == hayType then
-    --         return true
-    --     end
-    -- end
-    -- return false
     local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
     for fromFillType, to in pairs(converter) do
         local targetFillType = to.targetFillTypeIndex
@@ -581,21 +501,10 @@ function MoistureSystem:getDefaultMoisture()
     return self.currentMoisturePercent
 end
 
--- function MoistureSystem:loadGrassTypes()
---     local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
---     for fromFillType, to in pairs(converter) do
---         local targetFillType = to.targetFillTypeIndex
---         if fromFillType == targetFillType then
---             continue
---         end
---     end
--- end
-
 function MoistureSystem:onStartMission()
     CropValueMap.initialize()
     local ms = g_currentMission.MoistureSystem
     ms:setHeights()
-    -- ms:loadGrassTypes()
     ms.missionStarted = true
 
     if g_currentMission:getIsServer() then
