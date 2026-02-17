@@ -32,6 +32,96 @@ This mod tracks moisture levels on fields and dropped crop piles in Farming Simu
 - Server-only setting with permission-based access control
 - Persists in save game XML
 
+#### Adding New Settings
+Follow these steps to add a new setting to the mod:
+
+1. **Define constants (if using enums)** - In `MoistureSettings.lua`:
+   ```lua
+   -- Prefer integer constants over string values for settings with multiple options
+   MoistureSettings.SETTING_OPTION_ONE = 1
+   MoistureSettings.SETTING_OPTION_TWO = 2
+   ```
+
+2. **Add to menuItems array** - In `MoistureSettings.lua`:
+   ```lua
+   MoistureSettings.menuItems = {
+       'environment',
+       'existingSetting',
+       'newSettingName'  -- Add your setting here
+   }
+   ```
+
+3. **Define setting configuration** - In `MoistureSettings.lua`:
+   ```lua
+   MoistureSettings.SETTINGS.newSettingName = {
+       ['default'] = 1,  -- Index of default value (1-based)
+       ['serverOnly'] = false,  -- true = only server/admin can change, false = client setting
+       ['permission'] = 'moistureSettings',  -- Permission required
+       ['values'] = { MoistureSettings.SETTING_OPTION_ONE, MoistureSettings.SETTING_OPTION_TWO },
+       ['strings'] = {
+           g_i18n:getText("setting_moisture_newSettingName_option1"),
+           g_i18n:getText("setting_moisture_newSettingName_option2")
+       }
+   }
+   ```
+
+4. **Add localization strings** - In `languages/l10n_en.xml`:
+   ```xml
+   <!-- Setting label and tooltip -->
+   <text name="setting_moisture_newSettingName" text="Setting Display Name"/>
+   <text name="setting_moisture_newSettingName_tooltip" text="Description of what the setting does."/>
+   
+   <!-- Option labels -->
+   <text name="setting_moisture_newSettingName_option1" text="Option One"/>
+   <text name="setting_moisture_newSettingName_option2" text="Option Two"/>
+   ```
+
+5. **Update MoistureSettingsEvent** - In `src/events/MoistureSettingsEvent.lua`:
+   ```lua
+   -- In new() function:
+   function MoistureSettingsEvent.new()
+       local self = MoistureSettingsEvent.emptyNew()
+       -- ... existing settings ...
+       self.newSettingName = g_currentMission.MoistureSystem.settings.newSettingName
+       return self
+   end
+   
+   -- In writeStream() function:
+   function MoistureSettingsEvent:writeStream(streamId, connection)
+       -- ... existing writes ...
+       streamWriteInt32(streamId, self.newSettingName)  -- Use appropriate type
+   end
+   
+   -- In readStream() function:
+   function MoistureSettingsEvent:readStream(streamId, connection)
+       -- ... existing reads ...
+       self.newSettingName = streamReadInt32(streamId)  -- Use matching type
+       self:run(connection)
+   end
+   
+   -- In run() function:
+   function MoistureSettingsEvent:run(connection)
+       -- ... existing assignments ...
+       g_currentMission.MoistureSystem.settings.newSettingName = self.newSettingName
+       -- ... rest of function ...
+   end
+   ```
+
+6. **Use the setting in code**:
+   ```lua
+   local settingValue = g_currentMission.MoistureSystem.settings.newSettingName
+   if settingValue == MoistureSettings.SETTING_OPTION_TWO then
+       -- Do something based on setting
+   end
+   ```
+
+**Important conventions:**
+- Always use integer constants for enum-style settings (not strings)
+- Use appropriate stream functions: `streamWriteInt32`/`streamReadInt32` for integers, `streamWriteBool`/`streamReadBool` for booleans, `streamWriteFloat32`/`streamReadFloat32` for floats
+- Localization keys follow pattern: `setting_moisture_<settingName>` for labels, `setting_moisture_<settingName>_tooltip` for descriptions
+- Default index is 1-based (first option = 1, not 0)
+- Settings are stored in `g_currentMission.MoistureSystem.settings` table
+
 ### Bale Rotting System
 - **Location**: `src/BaleRottingSystem.lua`
 - **Global Access**: `g_currentMission.baleRottingSystem`
