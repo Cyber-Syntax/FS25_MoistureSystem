@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="105">
     <author>Ozz</author>
-    <version>0.0.0.7</version>
+    <version>0.0.0.8</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -20,6 +20,10 @@ Features include terrain-based moisture variation, grass tedding and drying mech
 Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Beta Changelog:
+
+0.0.0.8 [WIP]:
+- Ensure ground material rot is affected by the game timescale.
+- Save moisture to 1 dp to reduce save file size growth.
 
 0.0.0.7:
 - Add a moisture meter hand tool for measuring ground moisture levels in the field. You can no longer see ground moisture in the HUD.
