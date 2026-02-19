@@ -125,6 +125,87 @@ Beta Changelog:
         </actionBinding>
     </inputBinding>
     
+    <helpLines>
+        <category title="$l10n_help_moisture_title">
+            <page title="$l10n_help_moisture_overview_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_overview_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_overview_2"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_field_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_field_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_field_2"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_grading_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_grading_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_grading_2"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_grading_3"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_grass_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_grass_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_grass_2"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_grass_3"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_groundrot_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_groundrot_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_groundrot_2"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_bales_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_bales_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_bales_2"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_bales_3"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_meter_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_meter_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_meter_2"/>
+                </paragraph>
+            </page>
+            <page title="$l10n_help_moisture_settings_title" iconSliceId="helpline.icon_shop">
+                <paragraph>
+                    <text text="$l10n_help_moisture_settings_1"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_settings_2"/>
+                </paragraph>
+                <paragraph>
+                    <text text="$l10n_help_moisture_settings_3"/>
+                </paragraph>
+            </page>
+        </category>
+    </helpLines>
+    
     <storeItems>
         <storeItem xmlFilename="objects/moistureMeter/moistureMeter.xml"/>
     </storeItems>
