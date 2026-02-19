@@ -16,8 +16,8 @@ GroundPropertyTracker.NORMAL_ROT_EXPOSURE_TIME = 50 * 60 * 1000 -- 50 minutes (m
 GroundPropertyTracker.DRYING_DECAY_RATE = 0.375
 GroundPropertyTracker.ROT_REMOVAL_THRESHOLD = 10.0 -- liters removed when accumulator reached
 -- ROT_ACCUMULATION_* are liters/sec at timescale 1; scaled by (updateDelta/1000)
-GroundPropertyTracker.ROT_ACCUMULATION_MIN = 0.02
-GroundPropertyTracker.ROT_ACCUMULATION_MAX = 0.05
+GroundPropertyTracker.ROT_ACCUMULATION_MIN = 0.0015
+GroundPropertyTracker.ROT_ACCUMULATION_MAX = 0.00375
 
 function GroundPropertyTracker.new()
     local self = setmetatable({}, GroundPropertyTracker_mt)
