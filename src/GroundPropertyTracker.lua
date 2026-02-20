@@ -1246,10 +1246,10 @@ function GroundPropertyTracker:saveToXMLFile(xmlFile, key)
             local location = string.format("%d,%d", math.floor(pile.gridX), math.floor(pile.gridZ))
             setXMLString(xmlFile, pileKey .. "#l", location)
 
-            -- Save moisture with 1 decimal precision
+            -- Save moisture with 3 decimal precision
             if pile.properties.moisture then
-                local roundedMoisture = math.floor(pile.properties.moisture * 10 + 0.5) / 10
-                setXMLString(xmlFile, pileKey .. "#m", string.format("%.1f", roundedMoisture))
+                local roundedMoisture = math.floor(pile.properties.moisture * 1000 + 0.5) / 1000
+                setXMLString(xmlFile, pileKey .. "#m", string.format("%.3f", roundedMoisture))
             end
         end
 
