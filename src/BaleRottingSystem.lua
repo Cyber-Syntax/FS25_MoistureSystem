@@ -249,7 +249,8 @@ function BaleRottingSystem:update(dt)
         -- Apply rotting if currently rotting (any tier)
         if status == self.BALE_STATUS.ROTTING_SLOWLY or status == self.BALE_STATUS.ROTTING or status == self.BALE_STATUS.ROTTING_QUICKLY then
             local rotLoss = self:calculateRotLoss(item, rainfall, snowfall, hailfall, timescale, peakExposure)
-            item.fillLevel = math.max(item.fillLevel - rotLoss, 0)
+            local newFillLevel = math.max(item.fillLevel - rotLoss, 0)
+            item:setFillLevel(newFillLevel)
 
             -- Mark for deletion if empty
             if item.fillLevel <= 0 then
