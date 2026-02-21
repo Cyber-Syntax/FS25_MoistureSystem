@@ -20,7 +20,9 @@ function MoistureSystem:loadMap()
         baleRotEnabled = true,
         baleRotRate = 1.0,
         baleGracePeriod = 15,
-        baleExposureDecayRate = 1.0
+        baleExposureDecayRate = 1.0,
+        showFieldMoisture = false,
+        moistureMeterReporting = MoistureSettings.METER_REPORTING_BLINKING
     }
 
     g_currentMission.groundPropertyTracker = GroundPropertyTracker.new()
@@ -582,6 +584,16 @@ function MoistureSystem:loadFromXMLFile()
             self.settings.baleExposureDecayRate = baleExposureDecayRate
         end
 
+        local showFieldMoisture = getXMLBool(xmlFile, MoistureSystem.SaveKey .. ".settings#showFieldMoisture")
+        if showFieldMoisture ~= nil then
+            self.settings.showFieldMoisture = showFieldMoisture
+        end
+
+        local moistureMeterReporting = getXMLInt(xmlFile, MoistureSystem.SaveKey .. ".settings#moistureMeterReporting")
+        if moistureMeterReporting then
+            self.settings.moistureMeterReporting = moistureMeterReporting
+        end
+
         if g_currentMission.groundPropertyTracker then
             g_currentMission.groundPropertyTracker:loadFromXMLFile(xmlFile, MoistureSystem.SaveKey)
         end
@@ -687,6 +699,8 @@ function MoistureSystem:saveToXmlFile()
     setXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#baleRotRate", ms.settings.baleRotRate)
     setXMLInt(xmlFile, MoistureSystem.SaveKey .. ".settings#baleGracePeriod", ms.settings.baleGracePeriod)
     setXMLFloat(xmlFile, MoistureSystem.SaveKey .. ".settings#baleExposureDecayRate", ms.settings.baleExposureDecayRate)
+    setXMLBool(xmlFile, MoistureSystem.SaveKey .. ".settings#showFieldMoisture", ms.settings.showFieldMoisture)
+    setXMLInt(xmlFile, MoistureSystem.SaveKey .. ".settings#moistureMeterReporting", ms.settings.moistureMeterReporting)
 
     if g_currentMission.groundPropertyTracker then
         g_currentMission.groundPropertyTracker:saveToXMLFile(xmlFile, MoistureSystem.SaveKey)
@@ -770,6 +784,8 @@ function MoistureSystem:writeInitialClientState(streamId, connection)
     streamWriteFloat32(streamId, self.settings.baleRotRate)
     streamWriteInt32(streamId, self.settings.baleGracePeriod)
     streamWriteFloat32(streamId, self.settings.baleExposureDecayRate)
+    streamWriteBool(streamId, self.settings.showFieldMoisture)
+    streamWriteInt32(streamId, self.settings.moistureMeterReporting)
 
     -- Write object moisture data
     local objectCount = 0
@@ -812,6 +828,8 @@ function MoistureSystem:readInitialClientState(streamId, connection)
     self.settings.baleRotRate = streamReadFloat32(streamId)
     self.settings.baleGracePeriod = streamReadInt32(streamId)
     self.settings.baleExposureDecayRate = streamReadFloat32(streamId)
+    self.settings.showFieldMoisture = streamReadBool(streamId)
+    self.settings.moistureMeterReporting = streamReadInt32(streamId)
 
     -- Read object moisture data
     self.objectMoisture = {}
