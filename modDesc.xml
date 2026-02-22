@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="105">
+<modDesc descVersion="106">
     <author>Ozz</author>
-    <version>0.0.0.10</version>
+    <version>1.0.0.0</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -30,73 +30,51 @@ Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Beta Changelog:
 
-0.0.0.10:
+1.0.0.0:
 - Remove an unused setting
 - Add misc languages
-
-0.0.0.9:
-- Multiplayer initial client state event added. Lots of other multiplayer fixes.
-- Validate ground piles on save to ensure we don't save empty cells
-- Fix active cleanup of piles during baling and improved moisture aggregation
-- Improve stored bale save logic to only track bales with moisture/rot data
-
-0.0.0.8:
-- Ensure ground material rot is affected by the game timescale. This replaces previous rates so please give feedback!
-- Save moisture to 1 dp to reduce save file size growth.
-- Add a setting to let you see HUD field moisture without using the hand tool. Default is off.
-- Add a setting to control how the moisture meter displays readings (blinking alert vs notification). Default is blinking alert.
-- Only the top range will show the % in the crop grade menu, to reduce clutter.
-- Ensure pile properties are merged and cleaned when using a windrower.
-- Made object moisture updates multiplayer compatible.
-- Add bale rotting multiplayer sync event.
-- Improve meter positioning in third person.
-- Rewrote pile saving format to be resilient to fill type indices changing and reduce file size. The previous format should load correctly still.
-
-0.0.0.7:
-- Add a moisture meter hand tool for measuring ground moisture levels in the field. You can no longer see ground moisture in the HUD.
-- Rotting bales in storage will continue to rot.
-- Reworked ground material rotting to be based on rain exposure.
-
-0.0.0.6:
-- Wrapped grass bales will track moisture % on the bale. When the bale is done fermenting, volume will be reduced based on moisture thresholds.
-- Straw that is baled will track moisture on the baler. The output bale will have rain exposure % applied if over certain thresholds.
-- Hay will revert to grass if moisture goes about he 7% threshold.
-- Include straw bales in the bale rotting system.
-- Add missing setting strings.
-
-0.0.0.5:
-- Grass and straw on the ground over 15% moisture will rot away
-- Fix logic issue where grass pile moisture wasn't increasing in the rain
-
-0.0.0.4:
-- Fix game breaking deposting material into husbandries.
-- Adds bale rotting system.
-
-0.0.0.3:
-- Fix an issue when harvesting different moisture levels and how volume weighting is calculated.
-- Fix issues with forage wagons keeping moisture levels when unloading and loading.
-- Reduce the a delay for processing cells, the goal being that hay conversion happens closer to the implement.
-- When grass is tedded during a contract, base game behavior applies.
-
-0.0.0.2:
-- Add console command "msSetMoisture" for testing (usage: msSetMoisture value[1-100]). Will not violate the months range.
-- Delay application of tedding moisture reduction briefly for better rendering
-- Address an issue where tedding adjacent up/down wide spread rows would apply tedding reduction to middle sections twice.
-- Reduces the cell size for more fidelity. Revised how the data is saved to keep file size small. This will need monitoring as people play.
-- Add missing hail weather detection and impact on moisture levels.
-
-0.0.0.1:
-- Initial release
 
 ]]>
         </en>
         <de><![CDATA[Feuchtigkeitssystem
 
+Transformieren Sie Ihr Farmerlebnis mit einem ausgefeilten Feuchtigkeitssimulationssystem, das Realismus und strategische Tiefe zu Farming Simulator 25 bringt. Dieses umfassende Mod führt dynamische Feuchtigkeitsmechaniken ein, die grundlegend ändern, wie Sie die Bewirtschaftung von Kulturen, Erntezeitpunkt und Lagerbeschaffenheit angehen.
+
+Erleben Sie authentische Umweltinteraktionen, bei denen die Feuchtigkeitsstufen auf Ihrem Hof natürlich schwanken, basierend auf der Geländeerhebung, vorherrschenden Wettermuster (Niederschlag, Schneefall, Temperaturschwankungen) und Tag-Nacht-Zyklen. Felder in niedrigeren Höhenlagen bleiben feuchter, während höher gelegenes Land schneller austrocknet. Berücksichtigen Sie Feuchtigkeitswerte bei der Planung, welche Kulturen wo gepflanzt und wann geerntet werden sollen. Jede Entscheidung in der Landwirtschaft gewinnt neues Gewicht, während Sie das optimale Timing gegen die sich ändernden Bedingungen abwägen.
+
+Fortgeschrittenes Kulturqualitätssystem: Ihre geernteten Erträge sind keine einheitlichen Rohstoffe mehr. Jede Ladung erhält basierend auf ihrem Feuchtigkeitsgehalt bei der Ernte eine Qualitätsbenotung von A (Premium) bis D (schlecht), mit direkten wirtschaftlichen Konsequenzen zum Zeitpunkt des Verkaufs. Jede Kulturart wurde sorgfältig mit einzigartigen optimalen Feuchtigkeitsfenstern kalibriert, die realen landwirtschaftlichen Standards entsprechen. Meistern Sie diese Bereiche und timen Sie Ihre Operationen präzise, um die Rentabilität zu maximieren. Greifen Sie auf umfassende Noten-Tabellen und saisonale Feuchtigkeitsprognosen über die integrierte In-Game-Schnittstelle (Shift+M) zu.
+
+Funktionen:
+- Geländebewusste Feldfeuchtesimulation mit monatlichen Variationsmustern über drei unterschiedliche Umgebungsprofile (Trocken/Nass/Normal)
+- Ausgefeiltes Grasverwaltungssystem mit progressiver Wendelmechanik, wettereaktiven Trocknungsraten und automatischer Heuumwandlung bei optimalen Feuchtigkeitsschwellwerten. Mehrfaches Wenden beschleunigt das Trocknen, wenn Sie dies benötigen.
+- Bodenverrottung: Gras- und Strohhaufen, die freigelegt bleiben, sammeln im Laufe der Zeit Regenerosion an und lösen fortschreitenden Volumenverlust aus, während organisches Material verfällt. Das richtige Timing von Sammel- und Ballenpressoperationen wird kritisch. Heu wird zu Gras, wenn es zu nass wird.
+- Ballenverrottung: Ungeschützte Ballen verfolgen kumulative Regennässung mit anfänglichen Toleranzperioden, steigende Verfallsraten basierend auf Expositionshistorie und begrenzte Erholung während trockener Phasen. Strategische Verwendung von Wickelfolie und Schutzinfrastruktur schützt Ihre Investition.
+- Kaufen Sie das mobile Feuchtemessgerät im Store für präzise Feld- und Haufen-Messungen auf Abruf (Sie können dies bei Bedarf im HUD anzeigen).
+
+Umfangreiche Anpassungsoptionen ermöglichen es Ihnen, die Feuchtigkeitsdynamik, Wendeleffizienz, Verfallsparameter und Schnittstelleneinstellungen an Ihr bevorzugtes Spielerlebnis anzupassen. Ob Sie hartwöchige Realismus oder eine sanftere Einführung in die Feuchtigkeitsverwaltung bevorzugen – das System passt sich Ihrer Vision an.
+
+Github: https://github.com/sprkem/FS25_MoistureSystem
 
 ]]>
         </de>
-        <fr><![CDATA[Système d'humidité
+        <fr><![CDATA[Système D'Humidité
 
+Transformez votre expérience agricole avec un système de simulation d'humidité sophistiqué qui apporte du réalisme et de la profondeur stratégique à Farming Simulator 25. Ce mod complet introduit une mécanique d'humidité dynamique qui change fondamentalement votre approche de la gestion des cultures, du timing de récolte et des décisions de stockage.
+
+Découvrez des interactions environnementales authentiques où les niveaux d'humidité fluctuent naturellement sur votre ferme en fonction de l'élévation du terrain, des conditions météorologiques (pluie, neige, variations de température) et des cycles jour/nuit. Les champs en basse altitude restent plus humides tandis que les terres élevées sèchent plus rapidement. Tenez compte des niveaux d'humidité lorsque vous planifiez où planter vos cultures et quand les récolter. Chaque décision agricole prend du poids supplémentaire en équilibrant le timing optimal par rapport aux conditions changeantes.
+
+Système avancé de qualité des cultures : Vos rendements récoltés ne sont plus des produits uniformes. Chaque chargement reçoit une note de qualité de A (premium) à D (faible) en fonction de sa teneur en humidité au moment de la récolte, avec des conséquences économiques directes au moment de la vente. Chaque espèce de culture a été soigneusement calibrée avec des fenêtres d'humidité optimales uniques qui reflètent les normes agricoles réelles. Maîtrisez ces plages et chronométrez vos opérations précisément pour maximiser la rentabilité. Accédez aux tables de notes complètes et aux projections d'humidité saisonnières via l'interface intégrée du jeu (Maj+M).
+
+Caractéristiques :
+- Simulation d'humidité des champs sensible au terrain avec modèles de variation mensuelle sur trois profils environnementaux distincts (Sec/Humide/Normal)
+- Système de gestion des herbes sophistiqué avec mécanique de fanage progressive, taux de séchage réactifs aux intempéries et conversion automatique en foin aux seuils d'humidité optimaux. Plusieurs passages de fanage accélèrent le séchage si vous en avez besoin.
+- Pourriture au sol : Les tas d'herbe et de paille laissés à découvert accumulent l'exposition à la pluie au fil du temps, déclenchant une perte de volume progressive à mesure que la matière organique se détériore. Synchroniser la collecte et les opérations de mise en balles devient critique. Le foin redevient de l'herbe s'il devient trop humide.
+- Pourriture des balles : Les balles non protégées suivent l'exposition cumulative à la pluie avec les périodes de tolérance initiales, les taux de dégradation croissants en fonction de l'historique d'exposition, et une récupération limitée pendant les périodes sèches. L'utilisation stratégique de l'enrubannage et des infrastructures d'abri protège votre investissement.
+- Achetez l'outil de mesure d'humidité à main dans le magasin pour des lectures précises des champs et des tas sur demande (Vous pouvez l'afficher dans l'HUD si vous préférez).
+
+Les options de personnalisation étendues vous permettent de calibrer la dynamique d'humidité, l'efficacité du fanage, les paramètres de dégradation et les préférences d'interface pour correspondre à votre expérience de jeu préférée. Que vous cherchiez un réalisme hardcore ou une introduction plus douce à la gestion de l'humidité, le système s'adapte à votre vision.
+
+Github: https://github.com/sprkem/FS25_MoistureSystem
 
 ]]>
         </fr>
