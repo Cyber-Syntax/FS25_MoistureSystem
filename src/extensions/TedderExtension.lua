@@ -62,8 +62,7 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
     -- Check for existing grass pile moisture at this location
     local converter = g_fillTypeManager:getConverterDataByName("TEDDER")
     for fromFillType, to in pairs(converter) do
-        local targetFillType = to.targetFillTypeIndex
-        if fromFillType == targetFillType then
+        if fromFillType == to.targetFillTypeIndex then
             continue
         end
 
@@ -73,16 +72,6 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
             break
         end
     end
-    -- for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-    --     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
-    --     if grassFillType then
-    --         local existingProps = tracker:getPropertiesAtLocation(centerX, centerZ, grassFillType)
-    --         if existingProps and existingProps.moisture then
-    --             positionMoisture = existingProps.moisture
-    --             break
-    --         end
-    --     end
-    -- end
 
     local lsx, lsy, lsz, lex, ley, lez, lineRadius = DensityMapHeightUtil.getLineByAreaDimensions(sx, sy, sz, wx, wy, wz,
         hx, hy, hz, true)
@@ -112,21 +101,12 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
             for _, cell in pairs(gridCells) do
                 -- Check all grass types for cleanup
                 for fromFillType, to in pairs(converter) do
-                    local targetFillType = to.targetFillTypeIndex
-                    if fromFillType == targetFillType then
+                    if fromFillType == to.targetFillTypeIndex then
                         continue
                     end
 
                     tracker:checkPileHasContent(cell.gridX, cell.gridZ, fromFillType)
                 end
-
-
-                -- for grassType, _ in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-                --     local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassType)
-                --     if grassFillType then
-                --         tracker:checkPileHasContent(cell.gridX, cell.gridZ, grassFillType)
-                --     end
-                -- end
             end
         end
 
@@ -140,12 +120,10 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
 
             if g_currentMission.MoistureSystem:isHayFillType(targetFillType) and pickedUpHay == 0 and not isContract then
                 -- override default hay drop - convert back to appropriate grass type
-                local targetFillTypeName = g_fillTypeManager:getFillTypeNameByIndex(targetFillType)
                 local grassTypeName = nil
 
                 -- Find the grass type that converts to this hay type
                 for fromFillType, to in pairs(converter) do
-                    local targetFillType = to.targetFillTypeIndex
                     if fromFillType == targetFillType then
                         continue
                     end
@@ -155,17 +133,11 @@ function MSTedderExtension:processTedderArea(_, workArea, dt)
                         break
                     end
                 end
-                -- for grassType, hayType in pairs(GroundPropertyTracker.GRASS_CONVERSION_MAP) do
-                --     if hayType == targetFillTypeName then
-                --         grassTypeName = grassType
-                --         break
-                --     end
-                -- end
 
                 if grassTypeName then
-                    local grassFillType = g_fillTypeManager:getFillTypeIndexByName(grassTypeName)
                     dropArea.outputMoisture = positionMoisture
-                    dropped = self:processDropArea(dropArea, grassFillType, workArea.litersToDrop)
+                    dropped = self:processDropArea(dropArea, g_fillTypeManager:getFillTypeIndexByName(grassTypeName),
+                        workArea.litersToDrop)
                     dropArea.outputMoisture = nil
                 else
                     dropped = self:processDropArea(dropArea, targetFillType, workArea.litersToDrop)
