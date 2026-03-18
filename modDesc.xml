@@ -31,7 +31,10 @@ Github: https://github.com/sprkem/FS25_MoistureSystem
 Changelog:
 
 1.0.0.1 [WIP]:
-- Add safety check to avoid an issue loading a game when there is a bale in a baler.
+- Add safety check to avoid an issue loading a game when there is a bale in a baler
+- Add Czech translation thanks to Kynuska
+- Add Polish translation thanks to KITT3000
+
 ]]>
         </en>
         <de><![CDATA[Feuchtigkeitssystem
