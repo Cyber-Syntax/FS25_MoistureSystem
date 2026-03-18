@@ -512,7 +512,7 @@ function MoistureSystem:shouldTrackFillType(fillType)
         return true
     end
 
-    return CropValueMap.Data[fillType] ~= nil
+    return CropValueMap.Data ~= nil and CropValueMap.Data[fillType] ~= nil
 end
 
 ---

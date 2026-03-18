@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>Ozz</author>
-    <version>1.0.0.0</version>
+    <version>1.0.0.1</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -27,6 +27,11 @@ Features:
 Extensive customization options allow you to calibrate moisture dynamics, tedding efficiency, decay parameters, and interface preferences to match your preferred gameplay experience. Whether you seek hardcore realism or a gentler introduction to moisture management, the system adapts to your vision.
 
 Github: https://github.com/sprkem/FS25_MoistureSystem
+
+Changelog:
+
+1.0.0.1 [WIP]:
+- Add safety check to avoid an issue loading a game when there is a bale in a baler.
 ]]>
         </en>
         <de><![CDATA[Feuchtigkeitssystem
