@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="107">
     <author>Ozz</author>
-    <version>1.0.0.1</version>
+    <version>1.0.0.2</version>
     <iconFilename>icon_MoistureSystem.dds</iconFilename>
     <title>
         <en>Moisture System</en>
@@ -29,6 +29,9 @@ Extensive customization options allow you to calibrate moisture dynamics, teddin
 Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Changelog:
+
+1.0.0.2:
+- Rework events in multiplayer to reduce network traffic and subsequent issues.
 
 1.0.0.1:
 - Moisture and grade are now visible when harvesting on the fill HUD.
@@ -130,8 +133,10 @@ Journal des modifications :
         <sourceFile filename="src/events/InitialClientStateEvent.lua"/>
         <sourceFile filename="src/events/MoistureSettingsEvent.lua"/>
         <sourceFile filename="src/events/MoistureUpdateEvent.lua"/>
-        <sourceFile filename="src/events/ObjectMoistureUpdateEvent.lua"/>
-        <sourceFile filename="src/events/PilePropertyUpdateEvent.lua"/>
+        <sourceFile filename="src/events/PilePropertyRequestEvent.lua"/>
+        <sourceFile filename="src/events/PilePropertyResponseEvent.lua"/>
+        <sourceFile filename="src/events/ObjectMoistureRequestEvent.lua"/>
+        <sourceFile filename="src/events/ObjectMoistureResponseEvent.lua"/>
         <sourceFile filename="src/events/BaleRottingUpdateEvent.lua"/>
         <sourceFile filename="src/MoistureSettings.lua"/>
         <sourceFile filename="src/handTools/MoistureMeterTool.lua"/>

@@ -37,6 +37,7 @@ function MSPlayerHUDExtension:getFillLevelInformationAppended(_, display)
         return
     end
 
+    moistureSystem:ensureObjectMoistureLoaded(self)
     local objectData = moistureSystem.objectMoisture[self.uniqueId]
     if objectData == nil then
         return
@@ -272,6 +273,7 @@ function MSPlayerHUDExtension:showObjectMoistureInfo()
         return
     end
 
+    moistureSystem:ensureObjectMoistureLoaded(self.object)
     local objectData = moistureSystem.objectMoisture[self.object.uniqueId]
     if objectData == nil then
         return
@@ -332,6 +334,7 @@ function MSPlayerHUDExtension:showVehicleInfo(vehicle)
     end
 
     local moistureSystem = g_currentMission.MoistureSystem
+    moistureSystem:ensureObjectMoistureLoaded(vehicle)
     local objectData = moistureSystem.objectMoisture[vehicle.uniqueId]
     if objectData == nil then
         return
@@ -374,6 +377,7 @@ function MSPlayerHUDExtension:showPalletInfo(pallet)
         return
     end
 
+    moistureSystem:ensureObjectMoistureLoaded(pallet)
     local objectData = moistureSystem.objectMoisture[pallet.uniqueId]
     if objectData == nil then
         return

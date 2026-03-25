@@ -19,10 +19,6 @@ function MSInitialClientStateEvent:writeStream(streamId, connection)
     if g_currentMission.baleRottingSystem then
         g_currentMission.baleRottingSystem:writeInitialClientState(streamId, connection)
     end
-
-    if g_currentMission.groundPropertyTracker then
-        g_currentMission.groundPropertyTracker:writeInitialClientState(streamId, connection)
-    end
 end
 
 function MSInitialClientStateEvent:readStream(streamId, connection)
@@ -32,10 +28,6 @@ function MSInitialClientStateEvent:readStream(streamId, connection)
     -- Read subsystem data
     if g_currentMission.baleRottingSystem then
         g_currentMission.baleRottingSystem:readInitialClientState(streamId, connection)
-    end
-
-    if g_currentMission.groundPropertyTracker then
-        g_currentMission.groundPropertyTracker:readInitialClientState(streamId, connection)
     end
 
     self:run(connection)
