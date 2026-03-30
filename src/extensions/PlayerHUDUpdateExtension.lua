@@ -37,6 +37,10 @@ function MSPlayerHUDExtension:getFillLevelInformationAppended(_, display)
         return
     end
 
+    if display == nil or display.fillLevelData == nil then
+        return
+    end
+
     moistureSystem:ensureObjectMoistureLoaded(self)
     local objectData = moistureSystem.objectMoisture[self.uniqueId]
     if objectData == nil then
