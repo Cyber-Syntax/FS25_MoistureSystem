@@ -186,19 +186,6 @@ function MSDischargeableExtension:dischargeToObject(superFunc, dischargeNode, em
         return dischargedLiters
     end
 
-    local sourceMoisture = moistureSystem:getObjectMoisture(uniqueId, fillType)
-
-    -- If no moisture data, use field moisture at discharge position
-    if sourceMoisture == nil then
-        local info = dischargeNode.info
-        local sx, _, sz = localToWorld(info.node, -info.width, 0, info.zOffset)
-        local ex, _, ez = localToWorld(info.node, info.width, 0, info.zOffset)
-        local centerX = (sx + ex) / 2
-        local centerZ = (sz + ez) / 2
-
-        sourceMoisture = moistureSystem:getMoistureAtPosition(centerX, centerZ)
-    end
-
     -- Transfer moisture to target using volume-weighted averaging
     -- Use absolute value since dischargedLiters is negative
     moistureSystem:transferObjectMoisture(

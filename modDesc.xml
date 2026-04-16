@@ -30,6 +30,12 @@ Github: https://github.com/sprkem/FS25_MoistureSystem
 
 Changelog:
 
+1.0.0.4 [WIP]:
+- Remove redundant moisture calculation
+- Fix accuracy of grid moisture lookup in ground pickup
+- Added Ukrainian translation thanks to sava4903-coder
+
+
 1.0.0.3:
 - Add safety check to prevent errors when using SIM Dashboard and using a harvester.
 

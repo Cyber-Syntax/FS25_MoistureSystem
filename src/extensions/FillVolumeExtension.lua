@@ -93,7 +93,8 @@ function MSFillVolumeExtension:onFillUnitFillLevelChanged(superFunc, fillUnitInd
         moistureSystem:setObjectMoisture(uniqueId, fillType, averageMoisture)
     end
 
-    tracker:checkPileHasContent(x, z, fillType)
+    local gridX, gridZ = tracker:getGridPosition(x, z)
+    tracker:checkPileHasContent(gridX, gridZ, fillType)
 end
 
 -- Hook into FillVolume specialization (used by buckets, shovels, augers, etc.)

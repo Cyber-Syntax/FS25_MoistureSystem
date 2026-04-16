@@ -96,11 +96,13 @@ end
 
 -- Grid key helper
 function GroundPropertyTracker:getGridKey(gridX, gridZ, fillType)
+    gridX, gridZ = self:getGridPosition(gridX, gridZ)
     return string.format("%d_%d_%d", gridX, gridZ, fillType)
 end
 
 -- Simple grid key helper
 function GroundPropertyTracker:getSimpleGridKey(gridX, gridZ)
+    gridX, gridZ = self:getGridPosition(gridX, gridZ)
     return string.format("%d_%d", gridX, gridZ)
 end
 

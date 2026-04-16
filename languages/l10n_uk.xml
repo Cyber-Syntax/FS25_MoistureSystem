@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<l10n>
+	<translationContributors/>
+	<texts>
+		<!-- Settings Section -->
+		<text name="setting_moisture_section" text="Система вологості"/>
+
+		<!-- Settings -->
+		<text name="setting_moisture_environment" text="Клімат"/>
+		<text name="setting_moisture_environment_tooltip" text="Встановлює тип клімату для розрахунку вологості"/>
+		<text name="setting_moisture_environment_dry" text="СУХО"/>
+		<text name="setting_moisture_environment_normal" text="НОРМАЛЬНО"/>
+		<text name="setting_moisture_environment_wet" text="ВОЛОГО"/>
+		<text name="setting_moisture_moistureLossMultiplier" text="Множник висихання"/>
+		<text name="setting_moisture_moistureLossMultiplier_tooltip" text="Швидкість зменшення вологості (1-10)"/>
+		<text name="setting_moisture_moistureGainMultiplier" text="Множник зволоження"/>
+		<text name="setting_moisture_moistureGainMultiplier_tooltip" text="Швидкість збільшення вологості від дощу (1-10)"/>
+		<text name="setting_moisture_teddingMoistureReduction" text="Зменшення вологості при ворушінні"/>
+		<text name="setting_moisture_teddingMoistureReduction_tooltip" text="Зменшення вологості за один прохід ворушилки (1-5%)"/>
+		<text name="setting_moisture_baleRotEnabled" text="Гниття тюків"/>
+		<text name="setting_moisture_baleRotEnabled_tooltip" text="Увімкнути гниття тюків під дощем/снігом. Обгорнуті тюки та тюки під навісом захищені."/>
+		<text name="setting_moisture_baleRotRate" text="Швидкість гниття тюків"/>
+		<text name="setting_moisture_baleRotRate_tooltip" text="Множник швидкості втрати об'єму тюків. Більше значення = швидше гниття."/>
+		<text name="setting_moisture_baleExposureDecayRate" text="Швидкість висихання тюків"/>
+		<text name="setting_moisture_baleExposureDecayRate_tooltip" text="Як швидко тюки висихають після дощу. Менше = повільніше висихання."/>
+		<text name="setting_moisture_showFieldMoisture" text="Показувати вологість поля"/>
+		<text name="setting_moisture_showFieldMoisture_tooltip" text="Показує рівень вологості у HUD інформації поля."/>
+		<text name="setting_moisture_moistureMeterReporting" text="Сповіщення вимірювача вологості"/>
+		<text name="setting_moisture_moistureMeterReporting_tooltip" text="Як відображаються показники вимірювача вологості."/>
+		<text name="setting_moisture_moistureMeterReporting_blinking" text="Миготливе попередження"/>
+		<text name="setting_moisture_moistureMeterReporting_notification" text="Повідомлення"/>
+
+		<!-- Generic On/Off -->
+		<text name="setting_setting_off" text="ВИМК"/>
+		<text name="setting_setting_on" text="УВІМК"/>
+
+		<!-- Multiplayer Permission -->
+		<text name="permission_moisture_moistureSettings" text="Змінювати налаштування вологості"/>
+
+		<!-- Input Bindings -->
+		<text name="input_MOISTURE_MENU" text="Відкрити меню вологості"/>
+
+		<!-- HUD Display -->
+		<text name="moistureSystem_fieldInfo" text="Вологість поля"/>
+		<text name="moistureSystem_moisture" text="Вологість"/>
+		<text name="moistureSystem_range" text="Очікуваний діапазон"/>
+		<text name="moistureSystem_rainExposure" text="Вплив дощу"/>
+		<text name="moistureSystem_baleStatus" text="Стан"/>
+		<text name="moistureSystem_baleGettingWet" text="Намокає"/>
+		<text name="moistureSystem_baleRottingSlowly" text="Повільно гниє"/>
+		<text name="moistureSystem_baleRotting" text="Гниє"/>
+		<text name="moistureSystem_baleRottingQuickly" text="Швидко гниє"/>
+		<text name="moistureSystem_baleDrying" text="Висихає"/>
+
+		<!-- GUI -->
+		<text name="moistureSystem_gui_cropGradeValues" text="Якість культур"/>
+		<text name="moistureSystem_gui_description" text="Нижче показано класи вологості для кожної культури та множник ціни."/>
+		<text name="moistureSystem_gui_cropName" text="Культура"/>
+		<text name="moistureSystem_gui_gradeA" text="Клас A"/>
+		<text name="moistureSystem_gui_gradeB" text="Клас B"/>
+		<text name="moistureSystem_gui_gradeC" text="Клас C"/>
+		<text name="moistureSystem_gui_gradeD" text="Клас D"/>
+
+		<!-- Calendar GUI -->
+		<text name="moistureSystem_gui_moistureCalendar" text="Календар вологості"/>
+		<text name="moistureSystem_gui_currentEnvironment" text="Поточний клімат"/>
+		<text name="moistureSystem_gui_calendarDescription" text="Очікуваний рівень вологості по місяцях залежно від клімату."/>
+
+		<!-- Hand Tool -->
+		<text name="moistureSystem_moistureMeter" text="Вимірювач вологості"/>
+		<text name="moistureSystem_moistureMeterFunction" text="Вимірює вологість поля"/>
+		<text name="moistureSystem_measureLocation" text="Виміряти вологість"/>
+		<text name="moistureSystem_groundMoistureReading" text="Вологість ґрунту: %.2f%%"/>
+
+		<!-- Help Menu -->
+		<text name="help_moisture_title" text="Система вологості"/>
+
+		<!-- Overview Page -->
+		<text name="help_moisture_overview_title" text="Огляд"/>
+		<text name="help_moisture_overview_1" text="Мод додає динамічну систему вологості для культур і тюків."/>
+		<text name="help_moisture_overview_2" text="Час збору врожаю та зберігання тепер мають значення."/>
+		<!-- Field Moisture -->
+		<text name="help_moisture_field_title" text="Вологість поля"/>
+		<text name="help_moisture_field_1" text="Вологість поля змінюється залежно від висоти, погоди, температури та часу доби."/>
+		<text name="help_moisture_field_2" text="Використовуйте вимірювач вологості або HUD для перевірки рівня вологості."/>
+
+		<!-- Grading -->
+		<text name="help_moisture_grading_title" text="Якість культур"/>
+		<text name="help_moisture_grading_1" text="Культури отримують клас A-D залежно від вологості."/>
+		<text name="help_moisture_grading_2" text="Кожна культура має власний оптимальний рівень вологості."/>
+		<text name="help_moisture_grading_3" text="Перевіряйте таблицю класів у меню вологості."/>
+
+		<!-- Grass -->
+		<text name="help_moisture_grass_title" text="Сіно та трава"/>
+		<text name="help_moisture_grass_1" text="Використовуйте ворушилку для сушіння трави."/>
+		<text name="help_moisture_grass_2" text="Суха трава автоматично перетворюється на сіно."/>
+		<text name="help_moisture_grass_3" text="Дощ може спричинити гниття трави."/>
+
+		<!-- Ground Rot -->
+		<text name="help_moisture_groundrot_title" text="Гниття матеріалу"/>
+		<text name="help_moisture_groundrot_1" text="Трава та солома можуть гнити під дощем."/>
+		<text name="help_moisture_groundrot_2" text="Матеріал поступово зникає."/>
+
+		<!-- Bales -->
+		<text name="help_moisture_bales_title" text="Тюки"/>
+		<text name="help_moisture_bales_1" text="Тюки намокають під дощем."/>
+		<text name="help_moisture_bales_2" text="Тюки можуть гнити з часом."/>
+		<text name="help_moisture_bales_3" text="Зберігайте тюки під накриттям."/>
+
+		<!-- Meter -->
+		<text name="help_moisture_meter_title" text="Вимірювач вологості"/>
+		<text name="help_moisture_meter_1" text="Використовуйте інструмент для вимірювання вологості."/>
+		<text name="help_moisture_meter_2" text="HUD також може показувати вологість."/>
+
+		<!-- Settings -->
+		<text name="help_moisture_settings_title" text="Налаштування"/>
+		<text name="help_moisture_settings_1" text="Оберіть кліматичний режим."/>
+		<text name="help_moisture_settings_2" text="Налаштуйте швидкість висихання та зволоження."/>
+		<text name="help_moisture_settings_3" text="Адміністратор контролює налаштування у мультиплеєрі."/>
+
+	</texts>
+</l10n>

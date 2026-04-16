@@ -4,7 +4,7 @@
 	<texts>
 		<!-- Settings Section -->
 		<text name="setting_moisture_section" text="Moisture System"/>
-		
+
 		<!-- Settings -->
 		<text name="setting_moisture_environment" text="Weather Environment"/>
 		<text name="setting_moisture_environment_tooltip" text="Sets the climate type for moisture calculations"/>
@@ -29,17 +29,17 @@
 		<text name="setting_moisture_moistureMeterReporting_tooltip" text="How the moisture meter displays readings."/>
 		<text name="setting_moisture_moistureMeterReporting_blinking" text="Blinking Alert"/>
 		<text name="setting_moisture_moistureMeterReporting_notification" text="Notification"/>
-		
+
 		<!-- Generic On/Off -->
 		<text name="setting_setting_off" text="OFF"/>
 		<text name="setting_setting_on" text="ON"/>
-		
+
 		<!-- Multiplayer Permission -->
 		<text name="permission_moisture_moistureSettings" text="Change Moisture Settings"/>
-		
+
 		<!-- Input Bindings -->
 		<text name="input_MOISTURE_MENU" text="Open Moisture Menu"/>
-		
+
 		<!-- HUD Display -->
 		<text name="moistureSystem_fieldInfo" text="Field Moisture"/>
 		<text name="moistureSystem_moisture" text="Moisture"/>
@@ -51,7 +51,7 @@
 		<text name="moistureSystem_baleRotting" text="Rotting"/>
 		<text name="moistureSystem_baleRottingQuickly" text="Rotting Quickly"/>
 		<text name="moistureSystem_baleDrying" text="Drying"/>
-		
+
 		<!-- GUI -->
 		<text name="moistureSystem_gui_cropGradeValues" text="Crop Grade Values"/>
 		<text name="moistureSystem_gui_description" text="The data below shows moisture grading for each supported crop. The moisture range for the grade is shown, and the price multiplier for that grade is shown in brackets."/>
@@ -60,59 +60,59 @@
 		<text name="moistureSystem_gui_gradeB" text="Grade B"/>
 		<text name="moistureSystem_gui_gradeC" text="Grade C"/>
 		<text name="moistureSystem_gui_gradeD" text="Grade D"/>
-		
+
 		<!-- Calendar GUI -->
 		<text name="moistureSystem_gui_moistureCalendar" text="Moisture Calendar"/>
 		<text name="moistureSystem_gui_currentEnvironment" text="Current Environment"/>
 		<text name="moistureSystem_gui_calendarDescription" text="The calendar below shows the expected moisture range for each month based on your current environment setting. Moisture levels are influenced by rainfall, temperature, and season."/>
-		
+
 		<!-- Hand Tool -->
 		<text name="moistureSystem_moistureMeter" text="Moisture Meter"/>
 		<text name="moistureSystem_moistureMeterFunction" text="Measure field moisture levels"/>
 		<text name="moistureSystem_measureLocation" text="Measure Moisture"/>
 		<text name="moistureSystem_groundMoistureReading" text="Ground Moisture: %.2f%%"/>
-		
+
 		<!-- Help Menu -->
 		<text name="help_moisture_title" text="Moisture System"/>
-		
+
 		<!-- Overview Page -->
 		<text name="help_moisture_overview_title" text="Overview"/>
 		<text name="help_moisture_overview_1" text="The Moisture System mod introduces dynamic moisture levels that affect crops, grass, and bales throughout your farm. Moisture varies based on terrain elevation, weather conditions, and time of day."/>
 		<text name="help_moisture_overview_2" text="This creates a more realistic farming experience where harvest timing and storage management matter. Use the Moisture Menu (Shift+M) to view detailed crop grade tables and moisture calendars."/>
-		
+
 		<!-- Field Moisture Page -->
 		<text name="help_moisture_field_title" text="Field Moisture"/>
 		<text name="help_moisture_field_1" text="Field moisture varies across your farm based on several factors: Terrain elevation (lower areas are wetter), weather conditions (rain and snow increase moisture), temperature (warmer weather accelerates drying), and time of day (moisture decreases more during daytime)."/>
 		<text name="help_moisture_field_2" text="Monthly moisture ranges change throughout the year based on your chosen environment type (Dry/Normal/Wet). Use the moisture meter hand tool or enable the HUD display in settings to monitor moisture levels."/>
-		
+
 		<!-- Crop Grading Page -->
 		<text name="help_moisture_grading_title" text="Crop Quality &amp; Grading"/>
 		<text name="help_moisture_grading_1" text="Harvested crops are graded from A to D based on their moisture content. Grade A is optimal moisture with full price, Grade B is good moisture with slightly reduced price, Grade C is fair moisture with moderately reduced price, and Grade D is poor moisture with significantly reduced price."/>
 		<text name="help_moisture_grading_2" text="Each crop type has its own ideal moisture range. Harvest at the right time to maximize your profits! The moisture from the field is transferred to your harvested material and tracked through vehicles, ground piles, and storage."/>
 		<text name="help_moisture_grading_3" text="View the detailed grade ranges for all supported crops in the Moisture Menu (Shift+M). Crops include wheat, barley, oats, maize, canola, sunflower, soybeans, and many more."/>
-		
+
 		<!-- Grass & Hay Page -->
 		<text name="help_moisture_grass_title" text="Grass Tedding &amp; Hay"/>
 		<text name="help_moisture_grass_1" text="Manage hay production with realistic grass drying mechanics. Use a tedder to spread and aerate grass, reducing its moisture content. You can ted multiple times for faster drying! Weather affects drying - sunshine accelerates it while rain increases moisture."/>
 		<text name="help_moisture_grass_2" text="When grass dries sufficiently (below 7% moisture), it automatically converts to hay. If hay gets too wet again (above 7% moisture), it converts back to grass."/>
 		<text name="help_moisture_grass_3" text="Grass piles accumulate rain exposure time when left on the ground during wet weather. After enough exposure, grass begins to rot and gradually lose volume. Collect or bale your grass promptly to avoid losses."/>
-		
+
 		<!-- Ground Rot Page -->
 		<text name="help_moisture_groundrot_title" text="Ground Material Rotting"/>
 		<text name="help_moisture_groundrot_1" text="Both grass and straw piles left on the ground track rain exposure. Piles can tolerate some rain before degradation begins (grace period), but the longer material has been exposed to rain, the faster it rots."/>
 		<text name="help_moisture_groundrot_2" text="Piles slowly dry when rain stops, but once rotting starts, it continues. Rotting material gradually disappears and loses volume. Collect or bale your straw and grass promptly to avoid losses, especially before bad weather."/>
-		
+
 		<!-- Bales Page -->
 		<text name="help_moisture_bales_title" text="Bale Management"/>
 		<text name="help_moisture_bales_1" text="Bales left exposed to weather gradually accumulate rain exposure time when uncovered during wet weather. Bales can tolerate some exposure before rotting begins - this initial phase is called 'Getting Wet'."/>
 		<text name="help_moisture_bales_2" text="After the grace period, bales enter progressive rotting states: Rotting Slowly, Rotting, and Rotting Quickly. The longer bales have been exposed in the past, the faster they rot. Bales slowly dry out when rain stops, but once rotting begins, they cannot recover and will gradually lose volume."/>
 		<text name="help_moisture_bales_3" text="Protection: Wrapped bales and bales stored under shelter are protected from weather. Store bales indoors, wrap them, or sell them promptly to prevent losses."/>
-		
+
 		<!-- Moisture Meter Page -->
 		<text name="help_moisture_meter_title" text="Using the Moisture Meter"/>
 		<text name="help_moisture_meter_1" text="The moisture meter is a hand tool available in the Handtools section of the shop. To use it: Buy the moisture meter, equip it from your hand tool menu, then press and hold the action button for 4 seconds to get a moisture reading at your current location."/>
 		<text name="help_moisture_meter_2" text="Alternatively, you can enable 'Show Field Moisture' in the game settings to see moisture in the field info HUD without using the hand tool. This is useful for quick checks while operating equipment."/>
-		
+
 		<!-- Settings Page -->
 		<text name="help_moisture_settings_title" text="Configuration"/>
 		<text name="help_moisture_settings_1" text="Choose from three climate presets in the game settings: Dry (lower moisture levels), Normal (balanced, default), or Wet (higher moisture levels). Each preset affects monthly moisture ranges throughout the year."/>
